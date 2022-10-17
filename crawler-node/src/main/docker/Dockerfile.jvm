@@ -1,0 +1,26 @@
+FROM fedora:35
+
+ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
+
+USER root
+RUN dnf install -y java-11-openjdk
+RUN dnf install -y wget bzip2 psmisc net-tools iproute nmap
+RUN dnf install -y firefox
+
+# Download and install Gecko Driver
+RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.30.0/geckodriver-v0.30.0-linux64.tar.gz && \
+    tar xvfz geckodriver-v0.30.0-linux64.tar.gz && \
+    mv geckodriver /usr/local/bin/ && \
+    rm geckodriver-v0.30.0-linux64.tar.gz
+
+USER 185
+WORKDIR "/deployments"
+EXPOSE 8080
+
+# We make four distinct layers so if there are application changes the library layers can be re-used
+COPY --chown=185 target/quarkus-app/lib/ /deployments/lib/
+COPY --chown=185 target/quarkus-app/*.jar /deployments/
+COPY --chown=185 target/quarkus-app/app/ /deployments/app/
+COPY --chown=185 target/quarkus-app/quarkus/ /deployments/quarkus/
+
+ENTRYPOINT [ "java", "-jar", "/deployments/quarkus-run.jar", "-Dquarkus.http.host=0.0.0.0", "-Djava.util.logging.manager=org.jboss.logmanager.LogManager", "-Dquarkus.http.port=8081" ]
