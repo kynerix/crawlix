@@ -1,17 +1,20 @@
 # CrawliX - A Web Content Extraction platform
 
-CrawliX is a service that can be configured to navigate asynchronously through web pages, extract and store different types 
-of content, such as text fragments, images and screenshots, anything that can be extracted or generated from a running browser. 
+CrawliX is a crawling platform that can be configured to navigate asynchronously through multiple web pages, parse their content selectively, and save the retrieved text fragments, images and screenshots in one or multiple key-value stores, which are automatically created and managed according to the configuration of each crawler's needs. 
 
-The content can then be retrieved through an OpenAPI Restful API, which is ready for an easy consumption by other services and applications. 
-Data is stored temporarily for quick access, and subject to some pre-defined expiration and retention policies.
+All the data is indexed automatically, and can be queried and retrieved through a simple Rest API, which makes it ready for easy consumption by other services and applications. Each entry is subject to some predefined expiration and retention policies.
 
-The service provides the following main capabilities:
+The project is under active development, and currently provides the following main capabilities:
 
-* Support for multiple workspaces, with full data isolation to enable multi-project and multi-tenancy.
-* API to create and manage crawler plugins.
-* Crawler plugins created with Javascript injected and ran into a headless browser, taking leverage of all the browsers's capabilities and APIs.
-* Retrieved data is stored in one or multiple stores, ready for querying, with custom expiration policies.
+* Support for multiple workspaces, with full data isolation to enable multi-project and multi-tenancy capabilities.
+* Simple token based authentication and authorization. Integration with OIDC providers will shortly arrive.
+* REST API to create and manage crawler plugins, supporting both synchronous and asynchronous executions.
+* Simple lightweight Javascript library that simplifies the creation of the crawlers (plugins) while allowing to use all the browser's capabilities if needed.
+* The data retrieved in the browser gets stored in one or multiple persistent caches, ready for querying, with custom expiration policies.
+* Discovered URLs allow for automatic site deep navigation.
+* Scalability, multiple browser nodes can be deployed at once, and will coordinate among them to work over the crawling jobs queue.
+
+CrawliX is based on [Quarkus](https://quarkus.io/), [Infinispan](https://infinispan.org) and [Selenium](https://www.selenium.dev/documentation/).
 
 -----
 
@@ -66,8 +69,9 @@ Javascript is injected and the execution results are either store as content for
 ### Pre-requisites
 
 - Java 11+
-- Podman, for building and executing images. Docker can be used as well, although scripts are not provided yet.
+- Podman, for building and executing images. Docker can be used as well, although scripts are not provided, yet.
 - Firefox, in the PATH
+- jq tool in the PATH
 
 ### **Step 1**. Start Infinispan
 ```
