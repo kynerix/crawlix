@@ -2,11 +2,7 @@ package cloud.kynerix.crawlix.services;
 
 import cloud.kynerix.crawlix.controller.WorkerNodesManager;
 import cloud.kynerix.crawlix.crawler.CrawlingJob;
-import cloud.kynerix.crawlix.crawler.CrawlingJobsManager;
 import cloud.kynerix.crawlix.workspaces.Workspace;
-import cloud.kynerix.crawlix.workspaces.WorkspaceManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -19,17 +15,10 @@ import java.util.stream.Collectors;
 
 @Path("/crawlix-admin")
 @ApplicationScoped
-public class CrawlixAdminService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CrawlixAdminService.class.getName());
+public class CrawlixAdminService extends BaseService {
 
     @Inject
     WorkerNodesManager crawlerWorkerNodesManager;
-
-    @Inject
-    CrawlingJobsManager crawlingJobsManager;
-
-    @Inject
-    WorkspaceManager workspaceManager;
 
     @GET
     @Path("/list-nodes")

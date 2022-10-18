@@ -136,10 +136,10 @@ public class InfinispanSchema {
                 + (customContentCache == null ? "" : "_" + normalize(customContentCache));
     }
 
-    public RemoteCache<String, Content> getContentCache(Workspace workspace, String contentCache) {
+    public RemoteCache<String, Content> getContentCache(Workspace workspace, String contentCache, boolean createIfNotExist) {
         String cacheName = getContentCacheName(workspace, contentCache);
         RemoteCache cache = (RemoteCache<String, Content>) this.getCache(cacheName);
-        if (cache == null) {
+        if (cache == null && createIfNotExist) {
             cache = initCache(cacheName, 10);
         }
         return cache;

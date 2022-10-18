@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
+
 AUTH_TOKEN="00-DEFAULT-TOKEN-00"
 CURL_ARGS="-w \n -s -X "
 
-curl $CURL_ARGS POST http://localhost:8079/crawlix/install-plugins \
+set -o xtrace
+
+# Install multiple plugins
+curl -s -X POST http://localhost:8079/crawlix/install-plugins \
       --header "Content-Type: application/json" \
       --header "Authorization: $AUTH_TOKEN" \
       --data-binary @- <<EOF
@@ -12,13 +16,11 @@ curl $CURL_ARGS POST http://localhost:8079/crawlix/install-plugins \
 ]
 EOF
 
-echo ""
-echo "Installed plugins:"
-curl $CURL_ARGS GET "http://localhost:8079/crawlix/list-plugins" --header "Authorization: $AUTH_TOKEN" | jq
+# List installed plugins
+curl -s -X GET "http://localhost:8079/crawlix/list-plugins" --header "Authorization: $AUTH_TOKEN" | jq
 
-echo "------------------------------------------"
-
-curl $CURL_ARGS POST http://localhost:8079/crawlix/install-script?key=test-crawler-1 \
+# Change plugin script
+curl -s -X POST http://localhost:8079/crawlix/install-script?key=test-crawler-1 \
       --header 'Content-Type: text/plain' \
       --header "Authorization: $AUTH_TOKEN" \
       --data-binary @- <<EOF
@@ -45,7 +47,8 @@ crawlix
   .end()
 EOF
 
-curl $CURL_ARGS POST http://localhost:8079/crawlix/install-script?key=test-crawler-2 \
+# Update plugin script
+curl -s -X POST http://localhost:8079/crawlix/install-script?key=test-crawler-2 \
       --header 'Content-Type: text/plain' \
       --header "Authorization: $AUTH_TOKEN" \
       --data-binary @- <<EOF
@@ -60,18 +63,20 @@ crawlix
   .end()
 EOF
 
-# ----------------------------------------------------------------------------------------------------------------------
+# Run crawler 1 and store results
+curl -s -X GET "http://localhost:8079/crawlix/execute?plugin=test-crawler-1&store-results=true" \
+        --header 'Content-Type: application/json' \
+        --header "Authorization: $AUTH_TOKEN" | jq --tab
 
-echo ""
-echo ""
-echo "** EXECUTING"
-curl $CURL_ARGS GET "http://localhost:8079/crawlix/execute?plugin=test-crawler-1&store-results=true" \
+# Run crawler 2 and store results
+curl -s -X GET "http://localhost:8079/crawlix/execute?plugin=test-crawler-2&store-results=true" \
         --header 'Content-Type: application/json' \
         --header "Authorization: $AUTH_TOKEN" | jq --tab
-echo ""
-echo ""
-curl $CURL_ARGS GET "http://localhost:8079/crawlix/execute?plugin=test-crawler-2&store-results=true" \
-        --header 'Content-Type: application/json' \
-        --header "Authorization: $AUTH_TOKEN" | jq --tab
-echo ""
-echo ""
+
+# List all default content for this workspace without filters
+curl -s -GET http://localhost:8079/crawlix-content/search?max-results=3 --header "Content-Type: application/json" --header "Authorization: $AUTH_TOKEN" | jq
+
+# List filter with query : See https://infinispan.org/docs/stable/titles/query/query.html#ickle-query-language for syntax
+QUERY="(key='my-id-1' OR key='my-id-2')"
+curl -s -G GET http://localhost:8079/crawlix-content/search --data-urlencode "filter=$QUERY" --header "Content-Type: application/json" --header "Authorization: $AUTH_TOKEN" | jq
+

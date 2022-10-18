@@ -1,14 +1,17 @@
 # CrawliX - A Web Content Extraction platform
 
-CrawliX is a crawling platform that can be configured to navigate asynchronously through multiple web pages, parse their content selectively, and save the retrieved text fragments, images and screenshots in one or multiple key-value stores, which are automatically created and managed according to the configuration of each crawler's needs. 
+CrawliX is a **crawling platform** that can be configured to navigate asynchronously through multiple web pages, **parse content**  and save the retrieved text fragments, resources, images and screenshots in one or **multiple automatically managed key-value stores**. 
 
-All the data is indexed automatically, and can be queried and retrieved through a simple Rest API, which makes it ready for easy consumption by other services and applications. Each entry is subject to some predefined expiration and retention policies.
+All the data is automatically **indexed**, and can be **queried** through a simple **REST** and **GraphQL API**, which makes it ready for easy consumption by other services and applications. All entries are subject to some predefined **expiration and retention** policies.
 
-The project is under active development, and currently provides the following main capabilities:
+## Features
+The project is currently under active development, and provides the following general capabilities:
 
 * Support for multiple workspaces, with full data isolation to enable multi-project and multi-tenancy capabilities.
-* Simple token based authentication and authorization. Integration with OIDC providers will shortly arrive.
-* REST API to create and manage crawler plugins, supporting both synchronous and asynchronous executions.
+* Simple token based authentication and authorization. 
+* End user REST API to create and manage crawler plugins, supporting both synchronous and asynchronous executions.
+* Content query API, through REST and GraphQL.
+* Administrative REST API to manage the crawling nodes and workspaces.
 * Simple lightweight Javascript library that simplifies the creation of the crawlers (plugins) while allowing to use all the browser's capabilities if needed.
 * The data retrieved in the browser gets stored in one or multiple persistent caches, ready for querying, with custom expiration policies.
 * Discovered URLs allow for automatic site deep navigation.
@@ -117,4 +120,7 @@ curl -s -X GET -H "Content-Type: application/json" http://localhost:8079/crawlix
 
 ### **Step 5**: Start developing with Quarkus
 
-You'll find some API usage examples at **/crawlix-service/scripts/run-tests.sh**
+## API Examples
+
+* You'll find of cURL calls at */docs/run-curl-examples.sh*
+* OpenAPI UI (Swagger) : http://localhost:8079/q/swagger-ui/

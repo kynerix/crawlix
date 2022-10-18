@@ -1,70 +1,19 @@
 package cloud.kynerix.crawlix.services;
 
-import cloud.kynerix.crawlix.controller.WorkerNodesManager;
-import cloud.kynerix.crawlix.crawler.CrawlingJobsManager;
 import cloud.kynerix.crawlix.crawler.Plugin;
-import cloud.kynerix.crawlix.crawler.PluginsManager;
 import cloud.kynerix.crawlix.crawler.WorkerNode;
 import cloud.kynerix.crawlix.workspaces.Workspace;
-import cloud.kynerix.crawlix.workspaces.WorkspaceManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Path("/crawlix")
 @ApplicationScoped
-public class CrawlixService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CrawlixService.class.getName());
-
-    @Inject
-    WorkerNodesManager workerNodesManager;
-
-    @Inject
-    CrawlingJobsManager crawlingJobsManager;
-
-    @Inject
-    PluginsManager pluginsManager;
-
-    @Inject
-    WorkspaceManager workspaceManager;
-
-    private String getValue(String param, Map<String, String> params) {
-        String v = params.get(param);
-        if (v != null && v.trim().length() > 0) {
-            return v.trim();
-        } else {
-            return null;
-        }
-    }
-
-    private Integer getValueInteger(String param, Map<String, String> params) {
-        String v = getValue(param, params);
-        return v == null ? null : Integer.parseInt(v);
-    }
-
-    private Response operationResults(boolean success, String message) {
-        Map<String, Object> results = new HashMap<>();
-        results.put("success", success);
-        if (message != null) {
-            results.put("message", message);
-        }
-        LOGGER.debug("Operation results: " + success + " - msg: " + message);
-        return Response.accepted(results).build();
-    }
-
-    private Response noAuth() {
-        LOGGER.error("Invalid auth token");
-        return Response.status(Response.Status.FORBIDDEN).build();
-    }
+public class CrawlixService extends BaseService {
 
     @POST
     @Path("/install-plugin")
@@ -263,7 +212,7 @@ public class CrawlixService {
             try {
                 Response response = workerNodesManager.executeRemoteCrawler(node.getKey(), workspace.getKey(), pluginKey, storeResults);
                 if (response == null) {
-                    return operationResults(false, "Unkown error");
+                    return operationResults(false, "Unknown error");
                 } else {
                     return response;
                 }
@@ -271,21 +220,6 @@ public class CrawlixService {
                 LOGGER.error("Error executing plugin " + pluginKey + " in node " + node, e);
                 return operationResults(false, "Error executing plugin " + pluginKey + " - Exception: " + e.getClass().getName());
             }
-        }
-    }
-
-
-    @GET
-    @Path("/javascript")
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response sendJavascript() {
-        // Execute remotely and return response
-        WorkerNode crawlerWorkerNode = workerNodesManager.getRandomNode();
-        if (crawlerWorkerNode == null || !crawlerWorkerNode.isActive()) {
-            LOGGER.error("No crawling node available - cancelling");
-            return Response.serverError().build();
-        } else {
-            return workerNodesManager.getJavascript(crawlerWorkerNode.getKey());
         }
     }
 }
