@@ -64,6 +64,7 @@ Javascript is injected and the execution results are either store as content for
 - A set of Javascript libraries for simple DOM manipulation
 - A simple management console and monitoring capabilities [TBD]
 
+![CrawliX architecture overview](docs/images/arch-overview.png)
 
 -----
 
