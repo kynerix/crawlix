@@ -6,7 +6,7 @@
     <cache-container>
         <distributed-cache name="$CACHE_NAME" owners="1" mode="SYNC" statistics="true">
             <encoding>
-                <key   media-type="application/x-protostream"/>
+                <key media-type="application/x-protostream"/>
                 <value media-type="application/x-protostream"/>
             </encoding>
             <memory>
@@ -17,6 +17,11 @@
                             purge="false">
                 </file-store>
             </persistence>
+            <indexing enabled="true" storage="filesystem">
+                <indexed-entities>
+                    <indexed-entity>$ENTITY</indexed-entity>
+                </indexed-entities>
+            </indexing>
         </distributed-cache>
     </cache-container>
 </infinispan>

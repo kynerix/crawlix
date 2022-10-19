@@ -32,20 +32,21 @@ public abstract class BaseService {
     @Inject
     CrawlingJobsManager crawlingJobsManager;
 
-    Response operationResults(boolean success, String message) {
+    private Map<String, Object> getResponseMap(boolean success, String message) {
+        LOGGER.debug("Operation results: " + success + " - msg: " + message);
         Map<String, Object> results = new HashMap<>();
         results.put("success", success);
         if (message != null) {
             results.put("message", message);
         }
-        LOGGER.debug("Operation results: " + success + " - msg: " + message);
-        return Response.accepted(results).build();
+        return results;
+    }
+
+    Response operationResults(boolean success, String message) {
+        return Response.accepted( getResponseMap(success, message) ).build();
     }
 
     Response noAuth() {
-        LOGGER.error("Invalid auth token");
-        return Response.status(Response.Status.FORBIDDEN).build();
+        return Response.accepted( getResponseMap(false, "Forbidden. Invalid authorization token.") ).status(Response.Status.FORBIDDEN).build();
     }
-
-
 }

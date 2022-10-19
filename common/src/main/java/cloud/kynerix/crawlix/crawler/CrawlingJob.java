@@ -1,9 +1,11 @@
 package cloud.kynerix.crawlix.crawler;
 
+import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 
 import java.util.Date;
 
+@ProtoDoc("@Indexed")
 public class CrawlingJob {
 
     public static final String STATUS_WAITING = "WAITING";
@@ -29,6 +31,7 @@ public class CrawlingJob {
     }
 
     @ProtoField(number = 2, required = false)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.NO)")
     public String getStatus() {
         return status;
     }
@@ -39,6 +42,7 @@ public class CrawlingJob {
     }
 
     @ProtoField(number = 4)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.NO)")
     public String getPlugin() {
         return plugin;
     }
@@ -59,11 +63,13 @@ public class CrawlingJob {
     }
 
     @ProtoField(number = 8)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.NO)")
     public Date getLastCrawlAttempt() {
         return lastCrawlAttempt;
     }
 
     @ProtoField(number = 9)
+    @ProtoDoc("@Field(index = Index.YES, store = Store.NO)")
     public Date getLastSuccessCrawl() {
         return lastSuccessCrawl;
     }

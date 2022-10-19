@@ -25,6 +25,7 @@ public class InfinispanSchema {
     private static final Logger LOGGER = LoggerFactory.getLogger(InfinispanSchema.class.getName());
 
     private static final String PERSISTENT_CACHE_TEMPLATE_XML = "/persistent_cache_template.xml";
+    private static final String INDEXED_CACHE_TEMPLATE_XML = "/indexed_cache_template.xml";
 
     private static final String CACHE_WORKSPACES = "CXA_WORKSPACES";
     private static final String CACHE_NODES = "CXA_NODES";
@@ -47,13 +48,13 @@ public class InfinispanSchema {
         return RemoteCounterManagerFactory.asCounterManager(remoteCacheManager).getStrongCounter(counterName);
     }
 
-    RemoteCache initCache(String cacheName, int entriesInMemory) {
+    RemoteCache initCache(String cacheName, String entity, int entriesInMemory) {
         RemoteCache cache = remoteCacheManager.getCache(cacheName);
         if (cache == null) {
             LOGGER.info("Cache " + cacheName + " not found. Installing it:");
             long startTime = System.currentTimeMillis();
             cache = remoteCacheManager.administration().getOrCreateCache(cacheName,
-                    new XMLStringConfiguration(getCacheConfiguration(cacheName, entriesInMemory))
+                    new XMLStringConfiguration(getCacheConfiguration(cacheName, entity, entriesInMemory))
             );
             LOGGER.info("Installed " + cacheName + " in " + (System.currentTimeMillis() - startTime) + " ms");
         }
@@ -75,14 +76,16 @@ public class InfinispanSchema {
         return counterManager.getStrongCounter(counterName);
     }
 
-    String getCacheConfiguration(String cacheName, int entriesInMemory) {
+    String getCacheConfiguration(String cacheName, String indexedEntity, int entriesInMemory) {
         // Absurd trick to avoid dealing with byte[]
+        String template = indexedEntity == null ? PERSISTENT_CACHE_TEMPLATE_XML : INDEXED_CACHE_TEMPLATE_XML;
         String xml = new Scanner(
-                this.getClass().getResourceAsStream(PERSISTENT_CACHE_TEMPLATE_XML), "UTF-8")
+                this.getClass().getResourceAsStream(template), "UTF-8")
                 .useDelimiter("\\A")
                 .next()
                 .replace("$CACHE_NAME", cacheName)
-                .replace("$ENTRIES_IN_MEM", String.valueOf(entriesInMemory));
+                .replace("$ENTRIES_IN_MEM", String.valueOf(entriesInMemory))
+                .replace("$ENTITY", String.valueOf(indexedEntity));
 
         LOGGER.info(xml);
         return xml;
@@ -140,7 +143,7 @@ public class InfinispanSchema {
         String cacheName = getContentCacheName(workspace, contentCache);
         RemoteCache cache = (RemoteCache<String, Content>) this.getCache(cacheName);
         if (cache == null && createIfNotExist) {
-            cache = initCache(cacheName, 10);
+            cache = initCache(cacheName, "crawlix.Content", 10);
         }
         return cache;
     }
@@ -170,16 +173,16 @@ public class InfinispanSchema {
     //
 
     public void initGlobalSchema() {
-        initCache(CACHE_NODES, 100);
-        initCache(CACHE_WORKSPACES, 100);
+        initCache(CACHE_NODES, null, 100);
+        initCache(CACHE_WORKSPACES, null, 100);
         initCounter(COUNTER_ID_JOBS);
         initCounter(COUNTER_ID_CONTENT);
     }
 
     public void initWorkspaceSchema(Workspace workspace) {
-        initCache(buildCacheName(workspace, InfinispanSchema.CACHE_PLUGINS), 1000);
-        initCache(buildCacheName(workspace, InfinispanSchema.CACHE_JOBS), 1000);
-        initCache(buildCacheName(workspace, InfinispanSchema.CACHE_VISITED), 1000);
-        initCache(getContentCacheName(workspace, null), 10);
+        initCache(buildCacheName(workspace, InfinispanSchema.CACHE_PLUGINS), null, 1000);
+        initCache(buildCacheName(workspace, InfinispanSchema.CACHE_JOBS), "crawlix.CrawlingJob", 1000);
+        initCache(buildCacheName(workspace, InfinispanSchema.CACHE_VISITED), null, 1000);
+        initCache(getContentCacheName(workspace, null), null, 10);
     }
 }

@@ -14,25 +14,30 @@ import java.util.UUID;
 
 @ApplicationScoped
 public class WorkspaceManager {
+
     @Inject
     InfinispanSchema infinispanSchema;
 
+    @ConfigProperty(name = "crawlix.workspaces.create.default", defaultValue = "false")
+    boolean CREATE_DEFAULT_WORKSPACE;
+
     @ConfigProperty(name = "crawlix.workspaces.default.name", defaultValue = "Default Workspace")
-    private String DEFAULT_WORKSPACE_NAME;
+    String DEFAULT_WORKSPACE_NAME;
 
     @ConfigProperty(name = "crawlix.workspaces.default.key", defaultValue = "default")
-    private String DEFAULT_WORKSPACE_KEY;
+    String DEFAULT_WORKSPACE_KEY;
 
     @ConfigProperty(name = "crawlix.workspaces.default.token", defaultValue = "00-DEFAULT-TOKEN-00")
-    private String DEFAULT_WORKSPACE_TOKEN;
+    String DEFAULT_WORKSPACE_TOKEN;
 
-    @ConfigProperty(name = "crawlix.workspaces.default.prefix", defaultValue = "DEFAULT")
-    private String DEFAULT_WORKSPACE_PREFIX;
-
-    @ConfigProperty(name = "crawlix.workspaces.create.default", defaultValue = "false")
-    private boolean CREATE_DEFAULT_WORKSPACE;
+    @ConfigProperty(name = "crawlix.admin.default.token", defaultValue = "00-DEFAULT-ADMIN-TOKEN-00")
+    String DEFAULT_ADMIN_TOKEN;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CrawlingJobsManager.class.getName());
+
+    public boolean isAdmin(String authHeader) {
+        return authHeader != null && authHeader.equals(DEFAULT_ADMIN_TOKEN);
+    }
 
     public Workspace getWorkspaceByAuthHeader(String authHeader) {
         return getWorkspaceByToken(authHeader);
@@ -49,6 +54,12 @@ public class WorkspaceManager {
         return null;
     }
 
+    public void removeWorkspace(String key) {
+        if (key != null) {
+            infinispanSchema.getWorkspacesCache().remove(key);
+        }
+    }
+
     public Workspace getWorkspaceByKey(String key) {
         return infinispanSchema.getWorkspacesCache().get(key);
     }
@@ -57,7 +68,18 @@ public class WorkspaceManager {
         return new ArrayList<>(infinispanSchema.getWorkspacesCache().values());
     }
 
-    public void updateWorkspace(Workspace workspace) {
+    public Workspace create(String key, String name, boolean createToken) {
+        Workspace workspace = new Workspace();
+        workspace.setKey(key);
+        workspace.setName(name);
+        if (createToken) {
+            workspace.addToken(generateRandomAccessToken());
+        }
+        save(workspace);
+        return workspace;
+    }
+
+    public void save(Workspace workspace) {
         infinispanSchema.getWorkspacesCache().put(workspace.getKey(), workspace);
         LOGGER.info("Updated " + workspace);
     }
@@ -68,14 +90,16 @@ public class WorkspaceManager {
 
     public void init() {
         if (CREATE_DEFAULT_WORKSPACE) {
-            LOGGER.info("Creating default workspace");
-            Workspace workspace = new Workspace();
-            workspace.setKey(DEFAULT_WORKSPACE_KEY);
-            workspace.setName(DEFAULT_WORKSPACE_NAME);
+            LOGGER.warn("Creating default workspace - Do not use this in production.");
+            Workspace workspace = create(DEFAULT_WORKSPACE_KEY, DEFAULT_WORKSPACE_NAME, false);
             workspace.addToken(DEFAULT_WORKSPACE_TOKEN);
-            updateWorkspace(workspace);
+            save(workspace);
         } else {
             LOGGER.info("Skipping initial workspace creation");
+        }
+
+        if (DEFAULT_ADMIN_TOKEN != null && DEFAULT_ADMIN_TOKEN.contains("-DEFAULT-")) {
+            LOGGER.warn("Default Admin token - Please, change it for production.");
         }
     }
 }

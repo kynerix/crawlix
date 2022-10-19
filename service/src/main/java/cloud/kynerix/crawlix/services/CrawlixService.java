@@ -106,7 +106,6 @@ public class CrawlixService extends BaseService {
         return Response.accepted(plugin.getScript()).build();
     }
 
-
     @DELETE
     @Path("/delete-plugin")
     @Produces(MediaType.APPLICATION_JSON)

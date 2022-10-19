@@ -30,19 +30,19 @@ public class SeleniumCrawlerExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(SeleniumCrawlerExecutor.class.getName());
 
     @ConfigProperty(name = "crawler.gecko.driver")
-    private String GECKO_DRIVER_PATH;
+    String GECKO_DRIVER_PATH;
 
     @ConfigProperty(name = "crawler.firefox.args")
-    private String FIREFOX_ARGS;
+    String FIREFOX_ARGS;
 
     @ConfigProperty(name = "crawler.selenium.timeout.sec")
-    private long TIMEOUT_SECS;
+    long TIMEOUT_SECS;
 
     @ConfigProperty(name = "crawler.selenium.wait.sec")
-    private long WAIT_SECS;
+    long WAIT_SECS;
 
     @ConfigProperty(name = "crawler.local.directory")
-    private String LOCAL_DIRECTORY;
+    String LOCAL_DIRECTORY;
 
     public static final String INJECT_JS_RESOURCE = "/META-INF/resources/crawlix-plugin-api.js";
 
