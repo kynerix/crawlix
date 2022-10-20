@@ -221,4 +221,18 @@ public class CrawlixService extends BaseService {
             }
         }
     }
+
+    @GET
+    @Path("/javascript")
+    @Produces("application/javascript")
+    public Response sendJavascript() {
+        // Execute remotely and return response
+        WorkerNode crawlerWorkerNode = workerNodesManager.getRandomNode();
+        if (crawlerWorkerNode == null || !crawlerWorkerNode.isActive()) {
+            LOGGER.error("No crawling node available - cancelling");
+            return Response.serverError().build();
+        } else {
+            return workerNodesManager.getJavascript(crawlerWorkerNode.getKey());
+        }
+    }
 }

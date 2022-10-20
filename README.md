@@ -1,8 +1,11 @@
 # CrawliX - A Web Content Extraction platform
 
-CrawliX is a **crawling platform** that can be configured to navigate asynchronously through multiple web pages, **parse content**  and save the retrieved text fragments, resources, images and screenshots in one or **multiple automatically managed key-value stores**. 
+CrawliX is a **multi-tenant crawling platform** that enables the configuration of asynchronous navigation and parsing jobs 
+through websites and applications, saving the retrieved content and resources for later retrieval and querying. 
 
-All the data is automatically **indexed**, and can be **queried** through a simple **REST** and **GraphQL API**, which makes it ready for easy consumption by other services and applications. All entries are subject to some predefined **expiration and retention** policies.
+All the content, such text or html fragments, images or screenshots, is **indexed** and can be **queried** through 
+a simple **REST** and **GraphQL** APIs, which makes it convenient for easy consumption by other services and applications. 
+Content entries are subject to **retention** policies.
 
 ## Features
 The project is currently under active development, and provides the following general capabilities:
@@ -29,40 +32,36 @@ There are countless applications for data extraction from websites and web appli
 * Website health monitoring
 * Application integrations
 * Website monitoring
+* AI models training
 
 -----
 
 ## Architecture Overview
 
-CrawliX is composed of the following main components:
+CrawliX is composed of the following main components, each one supported through a container image that can be escalated to multiple nodes. 
 
-### 1. Shared Data Store and Caching with Infinispan ###
-Infinispan is a scalable data store and caching provider. CrawliX takes advantage of some of its advanced capabilities, 
+### 1. Key-Value data store, caching, indexing and search with Infinispan ###
+[Infinispan](https://infinispan.org) is a scalable data store and caching provider. CrawliX takes advantage of some of its advanced capabilities, 
 such as dynamically creating caches, set expiration policies or querying data. 
 Using it through its Quarkus extension provides an easy mapping to the necessary Java objects, through simple annotations.
   
 The data store acts as the central point of coordination for both the controller and the crawler nodes, to exchange data, 
 coordinate over queues of work and keep the parsing and extraction results, for later retrieval.
 
-### 2. The CrawliX service and controller ###
-This set of containers provides a Restful API to:
+### 2. The CrawliX service ###
+This set of containers provides the following Restful APIs:
 
-- Install new crawlers and manage them
-- Manage and query the status of crawlers
-- Retrieve the extracted content and data
-- Execute once the plugin, without writing the results to the database, for testing and diagnose purposes.
+- Tenant crawler plugin administration. Configure crawlers, execute them and get their status.
+- Full platform administration. Manage workspaces and security tokens.
+- Content search and GraphQL. Retrieve content by query.
 
-There's also a controller component that creates the seed crawling jobs, as needed.
+There's also a controller component that creates the seed crawling jobs, as needed. This component will eventually be 
+segregated from the API service.
 
 ### 3. The crawler nodes ###
-Each crawler node container has an embedded Firefox, that is initialized and controlled for every crawling job. Each node
+Each crawler node container has an **embedded Firefox**, that is initialized and controlled for every crawling job. Each node
 has an inner loop that looks for pending crawling jobs, lock one of them and runs the headless Firefox. The necessary 
 Javascript is injected and the execution results are either store as content for later query, or subsequent crawl jobs are created.
-
-### 4. Other components ###
-
-- A set of Javascript libraries for simple DOM manipulation
-- A simple management console and monitoring capabilities [TBD]
 
 ![CrawliX architecture overview](docs/images/arch-overview.png)
 
@@ -81,8 +80,9 @@ Javascript is injected and the execution results are either store as content for
 ```
 podman rm infinispan
 
-podman run --name infinispan --network=host -p 11222:11222 -e USER=kynerix -e PASS=crawlix quay.io/infinispan/server:latest
+podman run --name infinispan --network=host -e USER=kynerix -e PASS=crawlix quay.io/infinispan/server:latest
 ```
+The Infinispan console will become available at http://localhost:11222/console/welcome
 
 ### **Step 2**. Start the Controller Service in Quarkus dev mode
 ```
@@ -116,12 +116,10 @@ curl -s -X  GET "http://localhost:8079/crawlix/list-plugins" --header "Authoriza
 - Check the node's health:
 
 ```
-curl -s -X GET -H "Content-Type: application/json" http://localhost:8079/crawlix-admin/list-nodes | jq --tab
+curl -s -X GET -H "Content-Type: application/json" -H "Authorization: 00-DEFAULT-ADMIN-TOKEN-00" http://localhost:8079/crawlix-admin/list-nodes | jq --tab
 ```
+
+- Check Swagger UI : http://localhost:8079/q/swagger-ui/
 
 ### **Step 5**: Start developing with Quarkus
 
-## API Examples
-
-* You'll find of cURL calls at */docs/run-curl-examples.sh*
-* OpenAPI UI (Swagger) : http://localhost:8079/q/swagger-ui/

@@ -92,7 +92,7 @@ public class WorkerNodesManager {
         WorkerNode crawlerWorkerNode = getNode(node);
         try {
             if (crawlerWorkerNode != null) {
-                LOGGER.info("Stopping  node " + node);
+                LOGGER.info("Retrieving javascript" + node);
                 return getWorkerNodeService(crawlerWorkerNode).javascript();
             }
         } catch (Exception e) {

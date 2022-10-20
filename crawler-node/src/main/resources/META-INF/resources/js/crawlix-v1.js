@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------------------------------------------------
 /* CrawliX
 
    Lightweight DSL for common parsing operations in plugins. Feel free to use the full browser API, if needed.

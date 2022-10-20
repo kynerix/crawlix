@@ -1,7 +1,6 @@
 package cloud.kynerix.crawlix.services;
 
 import cloud.kynerix.crawlix.content.Content;
-import cloud.kynerix.crawlix.crawler.WorkerNode;
 import cloud.kynerix.crawlix.workspaces.Workspace;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -35,20 +34,6 @@ public class ContentService extends BaseService {
         } catch (Exception e) {
             LOGGER.error("Error running query - workspace: " + workspace + " filter: " + queryFilter, e);
             return operationResults(false, "Error running query: filter: '" + queryFilter + "' - " + e.getMessage());
-        }
-    }
-
-    @GET
-    @Path("/javascript")
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response sendJavascript() {
-        // Execute remotely and return response
-        WorkerNode crawlerWorkerNode = workerNodesManager.getRandomNode();
-        if (crawlerWorkerNode == null || !crawlerWorkerNode.isActive()) {
-            LOGGER.error("No crawling node available - cancelling");
-            return Response.serverError().build();
-        } else {
-            return workerNodesManager.getJavascript(crawlerWorkerNode.getKey());
         }
     }
 }

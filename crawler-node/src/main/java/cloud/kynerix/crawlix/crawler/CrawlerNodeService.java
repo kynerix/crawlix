@@ -79,9 +79,13 @@ public class CrawlerNodeService {
 
     @GET
     @Path("/javascript")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces("application/javascript")
     public Response javascript() {
-        return Response.accepted(crawlerNodeManager.getInjectedJS()).build();
-
+        String js = crawlerNodeManager.getInjectedJS();
+        if( js == null ) {
+            LOGGER.error("Can't find JS");
+        }
+        if (js == null) return Response.noContent().build();
+        return Response.accepted(js).build();
     }
 }

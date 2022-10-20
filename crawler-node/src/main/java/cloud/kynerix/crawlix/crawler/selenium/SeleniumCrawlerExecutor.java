@@ -41,12 +41,14 @@ public class SeleniumCrawlerExecutor {
     @ConfigProperty(name = "crawler.selenium.wait.sec")
     long WAIT_SECS;
 
-    @ConfigProperty(name = "crawler.local.directory")
-    String LOCAL_DIRECTORY;
+    @ConfigProperty(name = "crawler.browser.close", defaultValue = "true")
+    boolean CLOSE_BROWSER;
 
-    public static final String INJECT_JS_RESOURCE = "/META-INF/resources/crawlix-plugin-api.js";
+    @ConfigProperty(name = "crawler.javascript.lib.path")
+    String JAVASCRIPT_LIBRARY;
 
-    private String injectedJS;
+    @ConfigProperty(name = "crawler.javascript.lib.url")
+    String JAVASCRIPT_URL;
 
     @Inject
     CrawlingJobsManager crawlingJobsManager;
@@ -55,16 +57,8 @@ public class SeleniumCrawlerExecutor {
     ContentManager contentManager;
 
     public SeleniumCrawlerExecutor() {
-        this.injectedJS = loadInjectedJS();
+        //  this.injectedJS = loadInjectedJS();
         LOGGER.debug("Injected JS snippet");
-    }
-
-    String loadInjectedJS() {
-        return new Scanner(this.getClass().getResourceAsStream(INJECT_JS_RESOURCE), "UTF-8").useDelimiter("\\A").next();
-    }
-
-    public String getInjectedJS(boolean useCachedJS) {
-        return useCachedJS ? injectedJS : loadInjectedJS();
     }
 
     RemoteWebDriver buildLocalDriver() throws Exception {
@@ -90,7 +84,7 @@ public class SeleniumCrawlerExecutor {
 
     void releaseDriver(RemoteWebDriver driver) {
         try {
-            if (driver != null) {
+            if (driver != null && CLOSE_BROWSER) {
                 LOGGER.info("Releasing local driver");
                 driver.quit();
                 LOGGER.info("Local driver released");
@@ -147,7 +141,7 @@ public class SeleniumCrawlerExecutor {
         return result;
     }
 
-    private String escapeCR(String js) {
+    String escapeCR(String js) {
         return js
                 .replaceAll("\\n", " \\\\n")
                 .replace("\"", "\\\"");
@@ -159,6 +153,25 @@ public class SeleniumCrawlerExecutor {
                 "injectedJS.type = 'text/javascript'; \n" +
                 "injectedJS.text = \"" + escapeCR(js) + "\";\n" +
                 "document.body.appendChild(injectedJS);";
+        executeJS(driver, ijs);
+    }
+
+    void injectJSLibrary(RemoteWebDriver driver, String jsURL, String onLoadJS) {
+        String ijs = "(function(d, script) {\n" +
+                "script = d.createElement('script');\n" +
+                "script.type = 'text/javascript';\n" +
+                "script.async = true;\n" +
+                "script.src = '" + jsURL + "';\n";
+        if (onLoadJS != null) {
+            ijs += "script.onload = function(){\n" +
+                    onLoadJS +
+                    "\n" +
+                    "};\n";
+        }
+
+        ijs += "d.getElementsByTagName('head')[0].appendChild(script);\n" +
+                "}(document));";
+
         executeJS(driver, ijs);
     }
 
@@ -250,7 +263,8 @@ public class SeleniumCrawlerExecutor {
 
             // Inject JS and plugin JS to initialize context
             String customJS = plugin.getScript() == null ? "" : plugin.getScript();
-            injectJS(driver, injectedJS + customJS);
+            String libraryURL = JAVASCRIPT_URL + JAVASCRIPT_LIBRARY;
+            injectJSLibrary(driver, libraryURL, customJS);
             waitForProcessing();
 
             // Save results
@@ -290,5 +304,14 @@ public class SeleniumCrawlerExecutor {
         }
 
         return results;
+    }
+
+    public String getJavascriptLibraryContent() {
+        try {
+            return new Scanner(this.getClass().getResourceAsStream("/META-INF/resources" + JAVASCRIPT_LIBRARY), "UTF-8").useDelimiter("\\A").next();
+        } catch (Exception e) {
+            LOGGER.error("Error retrieving Javascript", e);
+            return null;
+        }
     }
 }

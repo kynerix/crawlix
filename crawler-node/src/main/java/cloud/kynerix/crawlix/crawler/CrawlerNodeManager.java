@@ -14,7 +14,6 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import java.util.Date;
-import java.util.Map;
 import java.util.Random;
 
 @ApplicationScoped
@@ -155,9 +154,7 @@ public class CrawlerNodeManager {
     }
 
     public String getInjectedJS() {
-        return crawlerExecutor.getInjectedJS(
-                !getWorkerNode().getKey().equals(WorkerNode.LOCALHOST) // Do not use JS cache for localhost development
-        );
+        return crawlerExecutor.getJavascriptLibraryContent();
     }
 
     public void onInit(@Observes StartupEvent ev) {

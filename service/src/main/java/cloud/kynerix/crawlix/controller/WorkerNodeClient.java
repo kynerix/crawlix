@@ -40,6 +40,6 @@ public interface WorkerNodeClient {
 
     @GET
     @Path("/javascript")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces("application/javascript")
     Response javascript();
 }
