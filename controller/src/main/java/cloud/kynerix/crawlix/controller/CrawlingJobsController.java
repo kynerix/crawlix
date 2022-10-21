@@ -21,9 +21,6 @@ public class CrawlingJobsController {
     private static final Logger LOGGER = LoggerFactory.getLogger(CrawlingJobsController.class.getName());
 
     @Inject
-    InfinispanSchema infinispanSchema;
-
-    @Inject
     PluginsManager pluginsManager;
 
     @Inject
@@ -68,12 +65,4 @@ public class CrawlingJobsController {
         }
     }
 
-    public void onInit(@Observes StartupEvent ev) throws Exception {
-        infinispanSchema.initGlobalSchema();
-        workspaceManager.init();
-
-        for (Workspace workspace : workspaceManager.getWorkspaces()) {
-            infinispanSchema.initWorkspaceSchema(workspace);
-        }
-    }
 }

@@ -1,7 +1,8 @@
 package cloud.kynerix.crawlix.services;
 
+import cloud.kynerix.crawlix.admin.AuthManager;
 import cloud.kynerix.crawlix.content.ContentManager;
-import cloud.kynerix.crawlix.controller.WorkerNodesManager;
+import cloud.kynerix.crawlix.nodes.CrawlerNodesManager;
 import cloud.kynerix.crawlix.crawler.CrawlingJobsManager;
 import cloud.kynerix.crawlix.crawler.PluginsManager;
 import cloud.kynerix.crawlix.workspaces.WorkspaceManager;
@@ -27,10 +28,13 @@ public abstract class BaseService {
     ContentManager contentManager;
 
     @Inject
-    WorkerNodesManager workerNodesManager;
+    CrawlerNodesManager workerNodesManager;
 
     @Inject
     CrawlingJobsManager crawlingJobsManager;
+
+    @Inject
+    AuthManager authManager;
 
     private Map<String, Object> getResponseMap(boolean success, String message) {
         LOGGER.debug("Operation results: " + success + " - msg: " + message);

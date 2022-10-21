@@ -1,4 +1,4 @@
-package cloud.kynerix.crawlix.controller;
+package cloud.kynerix.crawlix.nodes;
 
 import cloud.kynerix.crawlix.crawler.WorkerNode;
 import cloud.kynerix.crawlix.schema.InfinispanSchema;
@@ -17,20 +17,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
-public class WorkerNodesManager {
+public class CrawlerNodesManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WorkerNodesManager.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(CrawlerNodesManager.class.getName());
 
     @Inject
     InfinispanSchema infinispanSchema;
 
-    private WorkerNodeClient getWorkerNodeService(WorkerNode crawlerWorkerNode) throws URISyntaxException {
+    private CrawlerNodeClient getWorkerNodeService(WorkerNode crawlerWorkerNode) throws URISyntaxException {
         URI apiUri = new URI(crawlerWorkerNode.getPublicURI());
         return RestClientBuilder.newBuilder()
                 .baseUri(apiUri)
                 .readTimeout(1, TimeUnit.HOURS)
                 .connectTimeout(1, TimeUnit.MINUTES)
-                .build(WorkerNodeClient.class);
+                .build(CrawlerNodeClient.class);
     }
 
     public WorkerNode getNode(String nodeKey) {
@@ -66,7 +66,7 @@ public class WorkerNodesManager {
         try {
             if (crawlerWorkerNode != null) {
                 LOGGER.info("Starting node " + node);
-                WorkerNodeClient crawlerService = getWorkerNodeService(crawlerWorkerNode);
+                CrawlerNodeClient crawlerService = getWorkerNodeService(crawlerWorkerNode);
                 return crawlerService.startNode();
             }
         } catch (Exception e) {

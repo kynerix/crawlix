@@ -10,7 +10,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-@Path("/crawlix-content")
+@Path("/content")
 @ApplicationScoped
 public class ContentService extends BaseService {
     @GET
@@ -25,7 +25,7 @@ public class ContentService extends BaseService {
             @QueryParam("max-results") @DefaultValue("1000") int maxResults,
             @QueryParam("filter") String queryFilter
     ) {
-        Workspace workspace = workspaceManager.getWorkspaceByAuthHeader(authHeader);
+        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
         if (workspace == null) return noAuth();
 
         try {

@@ -74,9 +74,9 @@ curl -s -X GET "http://localhost:8079/crawlix/execute?plugin=test-crawler-2&stor
         --header "Authorization: $AUTH_TOKEN" | jq --tab
 
 # List all default content for this workspace without filters
-curl -s -GET http://localhost:8079/crawlix-content/search?max-results=3 --header "Content-Type: application/json" --header "Authorization: $AUTH_TOKEN" | jq
+curl -s -GET http://localhost:8079/content/search?max-results=3 --header "Content-Type: application/json" --header "Authorization: $AUTH_TOKEN" | jq
 
 # List filter with query : See https://infinispan.org/docs/stable/titles/query/query.html#ickle-query-language for syntax
 QUERY="(key='my-id-1' OR key='my-id-2')"
-curl -s -G GET http://localhost:8079/crawlix-content/search --data-urlencode "filter=$QUERY" --header "Content-Type: application/json" --header "Authorization: $AUTH_TOKEN" | jq
+curl -s -G GET http://localhost:8079/content/search --data-urlencode "filter=$QUERY" --header "Content-Type: application/json" --header "Authorization: $AUTH_TOKEN" | jq
 

@@ -23,7 +23,7 @@ public class CrawlixService extends BaseService {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             Plugin plugin) throws Exception {
 
-        Workspace workspace = workspaceManager.getWorkspaceByAuthHeader(authHeader);
+        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
         if (workspace == null) return noAuth();
 
         if (plugin.isValid()) {
@@ -43,7 +43,7 @@ public class CrawlixService extends BaseService {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             List<Plugin> pluginList) {
 
-        Workspace workspace = workspaceManager.getWorkspaceByAuthHeader(authHeader);
+        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
         if (workspace == null) return noAuth();
 
         if (pluginList == null || pluginList.isEmpty()) {
@@ -74,7 +74,7 @@ public class CrawlixService extends BaseService {
             @QueryParam("key") String pluginKey,
             String script) {
 
-        Workspace workspace = workspaceManager.getWorkspaceByAuthHeader(authHeader);
+        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
         if (workspace == null) return noAuth();
 
         Plugin plugin = pluginsManager.getPlugin(workspace, pluginKey);
@@ -95,7 +95,7 @@ public class CrawlixService extends BaseService {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("key") String pluginKey) {
 
-        Workspace workspace = workspaceManager.getWorkspaceByAuthHeader(authHeader);
+        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
         if (workspace == null) return noAuth();
 
         Plugin plugin = pluginsManager.getPlugin(workspace, pluginKey);
@@ -114,7 +114,7 @@ public class CrawlixService extends BaseService {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("plugin") String key) {
 
-        Workspace workspace = workspaceManager.getWorkspaceByAuthHeader(authHeader);
+        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
         if (workspace == null) return noAuth();
 
         pluginsManager.delete(workspace, key);
@@ -130,7 +130,7 @@ public class CrawlixService extends BaseService {
     public Response listPlugins(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader
     ) {
-        Workspace workspace = workspaceManager.getWorkspaceByAuthHeader(authHeader);
+        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
         if (workspace == null) return noAuth();
 
         List<Plugin> plugins = pluginsManager.getAllPlugins(workspace);
@@ -148,7 +148,7 @@ public class CrawlixService extends BaseService {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("plugin") String crawler
     ) {
-        Workspace workspace = workspaceManager.getWorkspaceByAuthHeader(authHeader);
+        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
         if (workspace == null) return noAuth();
 
         LOGGER.info("Starting plugin " + crawler);
@@ -169,7 +169,7 @@ public class CrawlixService extends BaseService {
     public Response stopPlugin(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("plugin") String crawler) {
-        Workspace workspace = workspaceManager.getWorkspaceByAuthHeader(authHeader);
+        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
         if (workspace == null) return noAuth();
 
         LOGGER.info("Stopping plugin " + crawler);
@@ -192,7 +192,7 @@ public class CrawlixService extends BaseService {
             @QueryParam("plugin") String pluginKey,
             @QueryParam("store-results") @DefaultValue("false") boolean storeResults) throws Exception {
 
-        Workspace workspace = workspaceManager.getWorkspaceByAuthHeader(authHeader);
+        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
         if (workspace == null) return noAuth();
 
         LOGGER.info("Running plugin " + pluginKey + " once");

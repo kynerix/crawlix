@@ -1,7 +1,7 @@
-package cloud.kynerix.crawlix.services;
+    package cloud.kynerix.crawlix.services;
 
-import cloud.kynerix.crawlix.controller.WorkerNodesManager;
 import cloud.kynerix.crawlix.crawler.CrawlingJob;
+import cloud.kynerix.crawlix.nodes.CrawlerNodesManager;
 import cloud.kynerix.crawlix.workspaces.Workspace;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -14,12 +14,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Path("/crawlix-admin")
+@Path("/admin")
 @ApplicationScoped
 public class CrawlixAdminService extends BaseService {
 
     @Inject
-    WorkerNodesManager crawlerWorkerNodesManager;
+    CrawlerNodesManager crawlerWorkerNodesManager;
 
     @GET
     @Path("/list-nodes")
@@ -28,7 +28,7 @@ public class CrawlixAdminService extends BaseService {
     public Response listNodes(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader
     ) {
-        if (!workspaceManager.isAdmin(authHeader)) {
+        if (!authManager.isAdmin(authHeader)) {
             return noAuth();
         }
         LOGGER.info("Retrieving all node status");
@@ -44,7 +44,7 @@ public class CrawlixAdminService extends BaseService {
     public Response listWorkspaces(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader
     ) {
-        if (!workspaceManager.isAdmin(authHeader)) {
+        if (!authManager.isAdmin(authHeader)) {
             return noAuth();
         }
         LOGGER.info("Retrieving all workspaces");
@@ -62,7 +62,7 @@ public class CrawlixAdminService extends BaseService {
             @QueryParam("workspace") String workspaceKey,
             @QueryParam("plugin") String plugin
     ) {
-        if (!workspaceManager.isAdmin(authHeader)) {
+        if (!authManager.isAdmin(authHeader)) {
             return noAuth();
         }
 
@@ -91,7 +91,7 @@ public class CrawlixAdminService extends BaseService {
             @QueryParam("key") String key,
             @QueryParam("name") String name
     ) {
-        if (!workspaceManager.isAdmin(authHeader)) {
+        if (!authManager.isAdmin(authHeader)) {
             return noAuth();
         }
 
@@ -114,7 +114,7 @@ public class CrawlixAdminService extends BaseService {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("key") String key
     ) {
-        if (!workspaceManager.isAdmin(authHeader)) {
+        if (!authManager.isAdmin(authHeader)) {
             return noAuth();
         }
 
@@ -134,7 +134,7 @@ public class CrawlixAdminService extends BaseService {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("token") String token
     ) {
-        if (!workspaceManager.isAdmin(authHeader)) {
+        if (!authManager.isAdmin(authHeader)) {
             return noAuth();
         }
 
@@ -142,7 +142,7 @@ public class CrawlixAdminService extends BaseService {
             return operationResults(false, "Parameter token is mandatory");
         }
 
-        Workspace workspace = workspaceManager.getWorkspaceByToken(token);
+        Workspace workspace = authManager.getWorkspaceByToken(token);
         if (workspace == null) {
             return operationResults(false, "Invalid token");
         }
@@ -161,7 +161,7 @@ public class CrawlixAdminService extends BaseService {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("workspace") String workspaceKey
     ) {
-        if (!workspaceManager.isAdmin(authHeader)) {
+        if (!authManager.isAdmin(authHeader)) {
             return noAuth();
         }
 
@@ -174,7 +174,7 @@ public class CrawlixAdminService extends BaseService {
             return operationResults(false, "Workspace '" + workspaceKey + "' not found");
         }
 
-        String token = workspaceManager.generateRandomAccessToken();
+        String token = authManager.generateRandomAccessToken();
 
         workspace.getTokens().add(token);
         workspaceManager.save(workspace);
@@ -190,7 +190,7 @@ public class CrawlixAdminService extends BaseService {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("node") String node
     ) {
-        if (!workspaceManager.isAdmin(authHeader)) {
+        if (!authManager.isAdmin(authHeader)) {
             return noAuth();
         }
 
@@ -210,7 +210,7 @@ public class CrawlixAdminService extends BaseService {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("node") String node
     ) {
-        if (!workspaceManager.isAdmin(authHeader)) {
+        if (!authManager.isAdmin(authHeader)) {
             return noAuth();
         }
 
@@ -218,7 +218,7 @@ public class CrawlixAdminService extends BaseService {
             return operationResults(false, "Node " + node + " does not exist");
         }
 
-        crawlerWorkerNodesManager.startNode(node);
+        crawlerWorkerNodesManager.stopNode(node);
         return operationResults(true, "Node " + node + " has been stopped");
     }
 }

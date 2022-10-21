@@ -1,9 +1,10 @@
 # CrawliX - A Web Content Extraction platform
 
-CrawliX is a **multi-tenant crawling platform** that enables the configuration of asynchronous navigation and parsing jobs 
-through websites and applications, saving the retrieved content and resources for later retrieval and querying. 
+CrawliX is a **crawling platform** that enables the configuration of automated navigation and parsing jobs 
+through websites and applications, through headless browsers, extracting, saving the retrieved content and resources 
+for later retrieval, analysis and querying. 
 
-All the content, such text or html fragments, images or screenshots, is **indexed** and can be **queried** through 
+All content, such text or html fragments, images or screenshots, is **indexed** and can be **queried** through 
 a simple **REST** and **GraphQL** APIs, which makes it convenient for easy consumption by other services and applications. 
 Content entries are subject to **retention** policies.
 
@@ -51,18 +52,21 @@ coordinate over queues of work and keep the parsing and extraction results, for 
 ### 2. The CrawliX service ###
 This set of containers provides the following Restful APIs:
 
-- Tenant crawler plugin administration. Configure crawlers, execute them and get their status.
-- Full platform administration. Manage workspaces and security tokens.
-- Content search and GraphQL. Retrieve content by query.
-
-There's also a controller component that creates the seed crawling jobs, as needed. This component will eventually be 
-segregated from the API service.
+- Administration of crawlers */crawlix*. Configure crawlers, execute them and get their status.
+- Platform administration at */admin*. Manage workspaces and security tokens.
+- Content search at */content* and GraphQL. Retrieve content by query.
 
 ### 3. The crawler nodes ###
 Each crawler node container has an **embedded Firefox**, that is initialized and controlled for every crawling job. Each node
 has an inner loop that looks for pending crawling jobs, lock one of them and runs the headless Firefox. The necessary 
 Javascript is injected and the execution results are either store as content for later query, or subsequent crawl jobs are created.
 
+### 4. The controller ###
+This component takes care of setting up the system, and perform regular tasks:
+- Create or update the Infinispan schema on startup
+- Periodically, create the seed crawling jobs.
+
+## Architecture Diagram
 ![CrawliX architecture overview](docs/images/arch-overview.png)
 
 -----
@@ -116,10 +120,10 @@ curl -s -X  GET "http://localhost:8079/crawlix/list-plugins" --header "Authoriza
 - Check the node's health:
 
 ```
-curl -s -X GET -H "Content-Type: application/json" -H "Authorization: 00-DEFAULT-ADMIN-TOKEN-00" http://localhost:8079/crawlix-admin/list-nodes | jq --tab
+curl -s -X GET -H "Content-Type: application/json" -H "Authorization: 00-DEFAULT-ADMIN-TOKEN-00" http://localhost:8079/admin/list-nodes | jq --tab
 ```
 
-- Check Swagger UI : http://localhost:8079/q/swagger-ui/
+- Check the Swagger UI : http://localhost:8079/q/swagger-ui/
 
 ### **Step 5**: Start developing with Quarkus
 

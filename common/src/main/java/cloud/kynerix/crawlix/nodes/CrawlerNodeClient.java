@@ -1,4 +1,4 @@
-package cloud.kynerix.crawlix.controller;
+package cloud.kynerix.crawlix.nodes;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
@@ -8,7 +8,7 @@ import javax.ws.rs.core.Response;
 
 @Path("/crawler-node")
 @RegisterRestClient
-public interface WorkerNodeClient {
+public interface CrawlerNodeClient {
 
     @GET
     @Path("/status")
