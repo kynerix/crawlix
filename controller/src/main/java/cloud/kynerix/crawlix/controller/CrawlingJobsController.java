@@ -4,15 +4,12 @@ import cloud.kynerix.crawlix.crawler.CrawlingJob;
 import cloud.kynerix.crawlix.crawler.CrawlingJobsManager;
 import cloud.kynerix.crawlix.crawler.Plugin;
 import cloud.kynerix.crawlix.crawler.PluginsManager;
-import cloud.kynerix.crawlix.schema.InfinispanSchema;
 import cloud.kynerix.crawlix.workspaces.Workspace;
 import cloud.kynerix.crawlix.workspaces.WorkspaceManager;
-import io.quarkus.runtime.StartupEvent;
 import io.quarkus.scheduler.Scheduled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import java.util.List;
 
@@ -64,5 +61,4 @@ public class CrawlingJobsController {
             }
         }
     }
-
 }

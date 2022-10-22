@@ -44,9 +44,10 @@ public class GlobalInitializer {
 
     void initWorkspaces() {
         if (CREATE_DEFAULT_WORKSPACE) {
-            LOGGER.warn("Creating default workspace - Do not use this in production.");
-            Workspace workspace = workspaceManager.create(DEFAULT_WORKSPACE_KEY, DEFAULT_WORKSPACE_NAME, INIT_ADMIN_TOKEN == null);
-            if (DEFAULT_WORKSPACE_TOKEN != null) {
+            boolean generateWorkspaceToken = DEFAULT_WORKSPACE_TOKEN == null || DEFAULT_WORKSPACE_TOKEN.isBlank() || DEFAULT_WORKSPACE_TOKEN.contains("RANDOM");
+            LOGGER.warn("Creating default workspace: " + DEFAULT_WORKSPACE_KEY);
+            Workspace workspace = workspaceManager.create(DEFAULT_WORKSPACE_KEY, DEFAULT_WORKSPACE_NAME, generateWorkspaceToken);
+            if (!generateWorkspaceToken) {
                 workspace.addToken(DEFAULT_WORKSPACE_TOKEN);
             }
             workspaceManager.save(workspace);
