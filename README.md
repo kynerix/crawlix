@@ -38,13 +38,12 @@ There are countless applications for data extraction from websites and web appli
 * Website monitoring
 * AI models training
 
------
 
-## Architecture Overview ##
+## Architecture ##
+See [CrawliX Architecture Overview](docs/Architecture.md).
 
-Please, see [CrawliX Architecture Overview](docs/Architecture.md).
+## Contributing to CrawliX ##
+See the [developer's guide](docs/Developers.md).
 
------
 ## Deploying CrawliX ##
-
-Please, see [deploying CrawliX](deploy/Deploy.md).
+See [deploying CrawliX](deploy/Deploy.md).

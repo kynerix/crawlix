@@ -1,4 +1,3 @@
-
 ## Running CrawliX in development mode
 
 ### Pre-requisites
