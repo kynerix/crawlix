@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
 pushd ..
-quarkus build
+./mvnw clean install
 popd
 

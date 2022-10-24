@@ -5,7 +5,7 @@ set -e
 if [ -z "$1" ]
   then
     # Default config
-    CONFIG_FILE=local-configuration.sh
+    CONFIG_FILE=config-minimal.sh
 else
     CONFIG_FILE=$1
 fi
