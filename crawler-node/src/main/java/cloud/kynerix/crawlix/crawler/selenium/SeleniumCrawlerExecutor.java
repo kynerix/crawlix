@@ -11,16 +11,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxDriverLogLevel;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.GeckoDriverService;
-import org.openqa.selenium.remote.RemoteWebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.net.HttpURLConnection;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -61,7 +63,7 @@ public class SeleniumCrawlerExecutor {
         LOGGER.debug("Injected JS snippet");
     }
 
-    RemoteWebDriver buildLocalDriver() throws Exception {
+    WebDriver buildLocalDriver() throws Exception {
 
         System.setProperty(GeckoDriverService.GECKO_DRIVER_EXE_PROPERTY, GECKO_DRIVER_PATH);
         System.setProperty(FirefoxDriver.SystemProperty.BROWSER_LOGFILE, "/dev/null");
@@ -75,14 +77,14 @@ public class SeleniumCrawlerExecutor {
         firefoxOptions.addPreference("browser.tabs.remote.autostart", false);
         firefoxOptions.addPreference("security.sandbox.content.level", 5);
 
-        RemoteWebDriver driver = new FirefoxDriver(firefoxOptions);
+        WebDriver driver = new FirefoxDriver(firefoxOptions);
 
         LOGGER.info("Local driver created");
 
         return driver;
     }
 
-    void releaseDriver(RemoteWebDriver driver) {
+    void releaseDriver(WebDriver driver) {
         try {
             if (driver != null && CLOSE_BROWSER) {
                 LOGGER.info("Releasing local driver");
@@ -94,8 +96,8 @@ public class SeleniumCrawlerExecutor {
         }
     }
 
-    RemoteWebDriver beginCrawling(Plugin plugin) throws Exception {
-        RemoteWebDriver driver = buildLocalDriver();
+    WebDriver beginCrawling(Plugin plugin) throws Exception {
+        WebDriver driver = buildLocalDriver();
 
         int height = plugin.getBrowserHeight();
         int width = plugin.getBrowserWidth();
@@ -128,7 +130,7 @@ public class SeleniumCrawlerExecutor {
         }
     }
 
-    Object executeJS(RemoteWebDriver driver, String js) {
+    Object executeJS(WebDriver driver, String js) {
         String script = js;
         Object result = null;
         try {
@@ -147,7 +149,7 @@ public class SeleniumCrawlerExecutor {
                 .replace("\"", "\\\"");
     }
 
-    void injectJS(RemoteWebDriver driver, String js) {
+    void injectJS(WebDriver driver, String js) {
         LOGGER.debug("Injecting JS");
         String ijs = "var injectedJS = document.createElement('script');\n" +
                 "injectedJS.type = 'text/javascript'; \n" +
@@ -156,7 +158,7 @@ public class SeleniumCrawlerExecutor {
         executeJS(driver, ijs);
     }
 
-    void injectJSLibrary(RemoteWebDriver driver, String jsURL, String onLoadJS) {
+    void injectJSLibrary(WebDriver driver, String jsURL, String onLoadJS) {
         String ijs = "(function(d, script) {\n" +
                 "script = d.createElement('script');\n" +
                 "script.type = 'text/javascript';\n" +
@@ -175,13 +177,15 @@ public class SeleniumCrawlerExecutor {
         executeJS(driver, ijs);
     }
 
-    String getBodyHtml(RemoteWebDriver driver) {
-        LOGGER.debug("Retrieving body html");
-        Object res = executeJS(driver, "var b = document.body; return b.innerHTML;");
-        if (res == null)
-            return "";
-        else
-            return String.valueOf(res);
+    int analyzeHttpCode(WebDriver driver) {
+        String title = driver.getTitle();
+        if (title != null && title.contains("404")) {
+            return HttpURLConnection.HTTP_NOT_FOUND;
+        }
+
+        // TODO: Confirm not found or http code, extend for other codes
+
+        return HttpURLConnection.HTTP_OK;
     }
 
     List<CrawlingJob> createURLFoundJobs(Workspace workspace, Map jsonParsedResults, Plugin plugin, boolean persist) {
@@ -193,9 +197,16 @@ public class SeleniumCrawlerExecutor {
                 String url = (String) urlObject.get("url");
                 String text = (String) urlObject.get("text");
                 String pluginKey = (String) urlObject.get("plugin");
+                String parent = (String) urlObject.get("parent");
+                String action = (String) urlObject.get("action");
 
-                if (url != null) {
-                    CrawlingJob job = crawlingJobsManager.newJob(workspace, pluginKey == null ? plugin.getKey() : pluginKey, url);
+                String targetPlugin = pluginKey == null ? plugin.getKey() : pluginKey;
+
+                if (url != null && !crawlingJobsManager.isURLVisited(workspace, targetPlugin, url)) {
+                    CrawlingJob job = crawlingJobsManager.newJob(workspace, targetPlugin, url, parent);
+                    if (action != null) {
+                        job.setAction(action.toUpperCase());
+                    }
                     if (persist) {
                         crawlingJobsManager.save(workspace, job);
                     }
@@ -235,16 +246,20 @@ public class SeleniumCrawlerExecutor {
         return savedContent;
     }
 
-    public CrawlingResults runBrowserCrawler(Workspace workspace, Plugin plugin, CrawlingJob crawlingJob, boolean persistData) {
+    public CrawlingResults runCrawler(Workspace workspace, Plugin plugin, CrawlingJob crawlingJob, boolean persistData) {
 
-        String url = crawlingJob == null ? plugin.getDefaultURL() : crawlingJob.getUrl();
+        String url = crawlingJob == null ? plugin.getDefaultURL() : crawlingJob.getURL();
 
-        RemoteWebDriver driver = null;
+        WebDriver driver = null;
 
         CrawlingResults results = new CrawlingResults();
+        results.setSuccess(false);
+        if (url == null) {
+            results.setError("URL is null");
+            return results;
+        }
 
         try {
-            results.setSuccess(false);
 
             if (plugin == null) {
                 throw new Exception("Plugin " + plugin + " not found");
@@ -256,10 +271,27 @@ public class SeleniumCrawlerExecutor {
                 results.setJobId(crawlingJob.getId());
             }
 
+            // Start crawling
             driver = beginCrawling(plugin);
 
             driver.navigate().to(url);
+
             waitForLoad();
+
+            // Unfortunately, the WebDriver provides no easy way of retrieving the http code
+            // Some basic heuristics to detect not found are needed instead
+            int httpCode = analyzeHttpCode(driver);
+            results.setHttpCode(httpCode);
+
+            if (httpCode != HttpURLConnection.HTTP_OK) {
+                return results;
+            }
+
+            if (crawlingJob != null && CrawlingJob.ACTION_CHECK.equals(crawlingJob.getAction())) {
+                // If the job is just about checking the existence of the page but no parsing, stop here
+                results.setSuccess(true);
+                return results;
+            }
 
             // Inject JS and plugin JS to initialize context
             String customJS = plugin.getScript() == null ? "" : plugin.getScript();
@@ -269,41 +301,54 @@ public class SeleniumCrawlerExecutor {
 
             // Save results
             LOGGER.debug("Retrieving results");
-            String jsonResults = (String) executeJS(driver, "return crawlix._getResults();");
 
-            if (jsonResults != null && jsonResults.trim().length() > 0) {
+            parseBrowserResults(driver, workspace, plugin, persistData, results);
 
-                try {
-                    ObjectMapper om = new ObjectMapper();
-                    Map parsedResults = om.readValue(jsonResults, HashMap.class);
-                    boolean successParsing = Boolean.parseBoolean(String.valueOf(parsedResults.get("_success")));
-                    results.setPluginLogs((List<String>) parsedResults.get("_logs"));
-
-                    if (successParsing) {
-                        List<Content> savedContent = createContentFound(workspace, parsedResults, plugin, persistData);
-                        results.setContent(savedContent);
-
-                        // Process parsed results
-                        List<CrawlingJob> savedJobs = createURLFoundJobs(workspace, parsedResults, plugin, persistData);
-                        results.setCrawlingJobs(savedJobs);
-                        results.setSuccess(true);
-                    }
-                } catch (Exception e) {
-                    LOGGER.error("Error parsing results", e);
-                }
+        } catch (WebDriverException e) {
+            // CATCH DNS errors and others
+            if (e.getMessage() != null && e.getMessage().contains("about:neterror?e=dnsNotFound")) {
+                // DNS not found error
+                LOGGER.error("DNS Error detected");
+                results.setError("DNS error: " + url);
             } else {
-                results.setError("Error injecting Javascript. Please, check the syntax for plugin " + plugin.getKey());
+                results.setError("Error loading: " + url + " : " + e.getMessage());
             }
-            // End of processing
-
         } catch (Exception e) {
-            results.setError("Error loading " + url + " : " + e.getClass().getName() + " : " + e.getMessage());
-            LOGGER.error("Error loading " + url, e);
+            results.setError("Unknown error " + url + " : " + e.getClass().getName() + " : " + e.getMessage());
+            LOGGER.error("Unknown error " + url, e);
         } finally {
             releaseDriver(driver);
         }
 
         return results;
+    }
+
+    private void parseBrowserResults(WebDriver driver, Workspace workspace, Plugin plugin, boolean persistData, CrawlingResults results) {
+        String jsonResults = (String) executeJS(driver, "return crawlix._getResults();");
+
+        if (jsonResults != null && jsonResults.trim().length() > 0) {
+
+            try {
+                ObjectMapper om = new ObjectMapper();
+                Map parsedResults = om.readValue(jsonResults, HashMap.class);
+                boolean successParsing = Boolean.parseBoolean(String.valueOf(parsedResults.get("_success")));
+                results.setPluginLogs((List<String>) parsedResults.get("_logs"));
+
+                if (successParsing) {
+                    List<Content> savedContent = createContentFound(workspace, parsedResults, plugin, persistData);
+                    results.setContent(savedContent);
+
+                    // Process parsed results
+                    List<CrawlingJob> savedJobs = createURLFoundJobs(workspace, parsedResults, plugin, persistData);
+                    results.setCrawlingJobs(savedJobs);
+                    results.setSuccess(true);
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error parsing results", e);
+            }
+        } else {
+            results.setError("Error injecting Javascript. Please, check the syntax for plugin " + plugin.getKey());
+        }
     }
 
     public String getJavascriptLibraryContent() {

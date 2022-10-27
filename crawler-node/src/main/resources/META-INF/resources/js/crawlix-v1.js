@@ -1,6 +1,7 @@
 /* CrawliX
 
-   Lightweight DSL for common parsing operations in plugins. Feel free to use the full browser API, if needed.
+   Lightweight library for common parsing operations in plugins.
+   Feel free to use the full browser API, if needed.
 */
 
 class CrawliX {
@@ -28,6 +29,7 @@ class CrawliX {
 
         this._currentField = 'body';                    // Active content field
         this._currentContent = [{}];                    // Active list of contents parsed
+        this._currentURLs = [];                         // Current list of links found
         this._logs = [];                                // Plugin logs for later analylis
     }
 
@@ -143,14 +145,16 @@ class CrawliX {
     /*
      * Links finding for navigation
      */
-    findLinks(cssSelector = "a", plugin = null) {
+    linksFind(cssSelector = "a", plugin = null) {
         let urls = Array.from(document.querySelectorAll(cssSelector));
             
         let linkObjects = urls.map(link => {
                 return {
                     url: link.href,
                     title: link.innerText,
-                    plugin: plugin
+                    plugin: plugin,
+                    parent: location.href,
+                    action: "parse"
                 }
             });
 
@@ -164,31 +168,51 @@ class CrawliX {
 
         this.log("findLinks - Found " + linkObjects.length + " links");
 
-        this._urlsFound = this._urlsFound.concat(linkObjects);
+        this._currentURLs = this._currentURLs.concat(linkObjects);
 
         return this;
     }
 
-    filterLinks(hrefInclude = null, hrefExclude = null) {
-        
-        this.filterLinksExpr(
+    linksInclude(hrefInclude) {
+        return this.linksFilter(hrefInclude);
+    }
+
+    linksExclude(hrefExclude) {
+        return this.linksFilter(null, hrefExclude);
+    }
+
+    linksFilter(hrefInclude = null, hrefExclude = null) {
+        return this.linksFilterByExpr(
             link => {
                 return (hrefInclude == null || link.url.includes(hrefInclude))
                     && (hrefExclude == null || !link.url.includes(hrefExclude))
             }
         )
+    }
+
+    linksFilterByExpr( evalFunction ) {
+        let initialCount = this._currentURLs.length;
+
+        if( evalFunction != null ) {         
+            this._currentURLs = this._currentURLs.filter(evalFunction);
+        }
+
+        this.log("filterLinksExpr - " + this._currentURLs.length + " links out of " + initialCount);
         return this;
     }
 
-    filterLinksExpr( evalFunction ) {
-        let initialCount = this._urlsFound.length;
-
-        if( evalFunction != null ) {         
-            this._urlsFound = this._urlsFound.filter(evalFunction);
-        }
-
-        this.log("filterLinks - " + this._urlsFound.length + " links out of " + initialCount);
+    linksAction(linkAction) {
+        this._currentURLs.forEach( link => { link.action = linkAction })
+        return this;
     }
+
+    linksAdd() {
+        this.log("Adding " + this._currentURLs.length + " links" );
+        this._urlsFound = this._urlsFound.concat(this._currentURLs);
+        this._currentURLs = [];
+        return this;
+    }
+
 
     // ------------------------------------------------------------------------------------------------------------------------
 
@@ -465,6 +489,19 @@ class CrawliX {
 
         this._currentContent = [{}];
 
+        return this;
+    }
+
+    removeTags( cssSelector ) {
+        let totalRemoved = 0;
+        document.querySelectorAll( cssSelector ).forEach(
+            node=> {
+                node.remove();
+                totalRemoved++;
+            }
+        );
+
+        this.log("removeTags - " + cssSelector + " : removed " + totalRemoved);
         return this;
     }
 }

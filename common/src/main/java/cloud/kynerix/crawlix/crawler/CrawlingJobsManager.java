@@ -24,14 +24,16 @@ public class CrawlingJobsManager {
         return infinispanSchema.getJobsCache(workspace).get(id);
     }
 
-    public CrawlingJob newJob(Workspace workspace, String pluginKey, String url) {
+    public CrawlingJob newJob(Workspace workspace, String pluginKey, String url, String parentURL) {
         CrawlingJob newCrawlingJob = new CrawlingJob();
         newCrawlingJob.setId(infinispanSchema.nextJobId());
-        newCrawlingJob.setUrl(url);
+        newCrawlingJob.setURL(url);
         newCrawlingJob.setWorkspace(workspace.getKey());
         newCrawlingJob.setConsecutiveFailures(0);
         newCrawlingJob.setPlugin(pluginKey);
         newCrawlingJob.setStatus(CrawlingJob.STATUS_WAITING);
+        newCrawlingJob.setParentURL(parentURL);
+
         LOGGER.debug("Crawling Job created " + newCrawlingJob);
         return newCrawlingJob;
     }
@@ -122,14 +124,21 @@ public class CrawlingJobsManager {
     }
 
     public void visitURL(Workspace workspace, String pluginKey, String url) {
-        infinispanSchema.getVisitedURLCache(workspace).put(pluginKey + "_" + url, "");
+        VisitedURL visitedURL = new VisitedURL();
+        visitedURL.setUrl(url);
+        visitedURL.setPlugin(pluginKey);
+        visitedURL.setDate(new Date());
+        infinispanSchema.getVisitedURLCache(workspace).put(pluginKey + "|" + url, visitedURL);
     }
 
     public boolean isURLVisited(Workspace workspace, String pluginKey, String url) {
-        return infinispanSchema.getVisitedURLCache(workspace).containsKey(pluginKey + "_" + url);
+        return infinispanSchema.getVisitedURLCache(workspace).containsKey(pluginKey + "|" + url);
     }
 
     public void cleanVisitedURLS(Workspace workspace, String pluginKey) {
-        infinispanSchema.getVisitedURLCache(workspace).clear();
+        infinispanSchema.getQueryFactory(infinispanSchema.getVisitedURLCache(workspace)).create(
+                        "DELETE from crawlix.VisitedURL v where plugin = :plugin")
+                .setParameter("plugin", pluginKey)
+                .executeStatement();
     }
 }

@@ -46,9 +46,10 @@ public class CrawlingJobsController {
                         LOGGER.debug("Checking existing jobs for plugin " + plugin.getKey());
                         List<CrawlingJob> crawlingJobs = crawlingJobsManager.findJobs(workspace, plugin.getKey());
                         if (crawlingJobs.isEmpty()) {
-                            LOGGER.debug("Queue is empty. Creating new job.");
+                            LOGGER.debug("Queue is empty. Creating new seed job.");
                             // Create new CrawlingJob
-                            CrawlingJob newCrawlingJob = crawlingJobsManager.newJob(workspace, plugin.getKey(), plugin.getDefaultURL());
+                            crawlingJobsManager.cleanVisitedURLS(workspace, plugin.getKey());
+                            CrawlingJob newCrawlingJob = crawlingJobsManager.newJob(workspace, plugin.getKey(), plugin.getDefaultURL(), null);
                             crawlingJobsManager.save(workspace, newCrawlingJob);
                             nJobsCreated++;
                         }

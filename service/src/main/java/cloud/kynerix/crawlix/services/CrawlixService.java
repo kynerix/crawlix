@@ -207,7 +207,7 @@ public class CrawlixService extends BaseService {
         if (node == null || !node.isActive()) {
             return operationResults(false, "Can't lock a node to execute crawler");
         } else {
-            LOGGER.error("Executing in worker node " + node.getKey());
+            LOGGER.debug("Executing in worker node " + node.getKey());
             try {
                 Response response = workerNodesManager.executeRemoteCrawler(node.getKey(), workspace.getKey(), pluginKey, storeResults);
                 if (response == null) {

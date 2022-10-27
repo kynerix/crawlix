@@ -3,8 +3,10 @@ package cloud.kynerix.crawlix.schema;
 import cloud.kynerix.crawlix.content.Content;
 import cloud.kynerix.crawlix.crawler.CrawlingJob;
 import cloud.kynerix.crawlix.crawler.Plugin;
+import cloud.kynerix.crawlix.crawler.VisitedURL;
 import cloud.kynerix.crawlix.crawler.WorkerNode;
 import cloud.kynerix.crawlix.workspaces.Workspace;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteCounterManagerFactory;
@@ -21,6 +23,12 @@ import java.util.Scanner;
 
 @ApplicationScoped
 public class InfinispanSchema {
+
+    @ConfigProperty(name = "crawlix.lifespan.content.days", defaultValue = "10")
+    int LIFESPAN_CONTENT_DAYS;
+
+    @ConfigProperty(name = "crawlix.lifespan.jobs.days", defaultValue = "5")
+    int LIFESPAN_JOBS_DAYS;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InfinispanSchema.class.getName());
 
@@ -49,15 +57,14 @@ public class InfinispanSchema {
         return RemoteCounterManagerFactory.asCounterManager(remoteCacheManager).getStrongCounter(counterName);
     }
 
-    RemoteCache initCache(String cacheName, String entity, int entriesInMemory) {
+    RemoteCache initCache(String cacheName, String entity, int entriesInMemory, int lifespanInDays) {
         RemoteCache cache = remoteCacheManager.getCache(cacheName);
         if (cache == null) {
             LOGGER.info("Cache " + cacheName + " not found. Installing it:");
-            long startTime = System.currentTimeMillis();
             cache = remoteCacheManager.administration().getOrCreateCache(cacheName,
-                    new XMLStringConfiguration(getCacheConfiguration(cacheName, entity, entriesInMemory))
+                    new XMLStringConfiguration(getCacheConfiguration(cacheName, entity, entriesInMemory, lifespanInDays))
             );
-            LOGGER.info("Installed " + cacheName + " in " + (System.currentTimeMillis() - startTime) + " ms");
+            LOGGER.info("Installed " + cacheName);
         }
 
         return cache;
@@ -77,16 +84,23 @@ public class InfinispanSchema {
         return counterManager.getStrongCounter(counterName);
     }
 
-    String getCacheConfiguration(String cacheName, String indexedEntity, int entriesInMemory) {
+    String getCacheConfiguration(String cacheName, String indexedEntity, int entriesInMemory, long lifespanInDays) {
         // Absurd trick to avoid dealing with byte[]
         String template = indexedEntity == null ? PERSISTENT_CACHE_TEMPLATE_XML : INDEXED_CACHE_TEMPLATE_XML;
+        long lifespanInMs = -1;
+        if (lifespanInDays > 0) {
+            lifespanInMs = lifespanInDays * 24 * 60 * 60 * 1000L;
+        }
+
         String xml = new Scanner(
                 this.getClass().getResourceAsStream(template), "UTF-8")
                 .useDelimiter("\\A")
                 .next()
                 .replace("$CACHE_NAME", cacheName)
                 .replace("$ENTRIES_IN_MEM", String.valueOf(entriesInMemory))
-                .replace("$ENTITY", String.valueOf(indexedEntity));
+                .replace("$ENTITY", String.valueOf(indexedEntity))
+                .replace("$LIFESPAN_DAYS", lifespanInDays == -1 ? "Disabled" : lifespanInDays + " days")
+                .replace("$LIFESPAN", String.valueOf(lifespanInMs));
 
         LOGGER.info(xml);
         return xml;
@@ -135,8 +149,8 @@ public class InfinispanSchema {
     }
 
 
-    public RemoteCache<String, String> getVisitedURLCache(Workspace workspace) {
-        return (RemoteCache<String, String>) this.getCache(buildCacheName(workspace, InfinispanSchema.CACHE_VISITED));
+    public RemoteCache<String, VisitedURL> getVisitedURLCache(Workspace workspace) {
+        return (RemoteCache<String, VisitedURL>) this.getCache(buildCacheName(workspace, InfinispanSchema.CACHE_VISITED));
     }
 
     String getContentCacheName(Workspace workspace, String customContentCache) {
@@ -148,7 +162,7 @@ public class InfinispanSchema {
         String cacheName = getContentCacheName(workspace, contentCache);
         RemoteCache cache = (RemoteCache<String, Content>) this.getCache(cacheName);
         if (cache == null && createIfNotExist) {
-            cache = initCache(cacheName, "crawlix.Content", 10);
+            cache = initCache(cacheName, "crawlix.Content", 10, LIFESPAN_CONTENT_DAYS);
         }
         return cache;
     }
@@ -178,17 +192,17 @@ public class InfinispanSchema {
     //
 
     public void initGlobalSchema() {
-        initCache(CACHE_NODES, null, 100);
-        initCache(CACHE_WORKSPACES, null, 100);
-        initCache(CACHE_SETTINGS, null, 100);
+        initCache(CACHE_NODES, null, 100, -1);
+        initCache(CACHE_WORKSPACES, null, 100, -1);
+        initCache(CACHE_SETTINGS, null, 100, -1);
         initCounter(COUNTER_ID_JOBS);
         initCounter(COUNTER_ID_CONTENT);
     }
 
     public void initWorkspaceSchema(Workspace workspace) {
-        initCache(buildCacheName(workspace, InfinispanSchema.CACHE_PLUGINS), null, 1000);
-        initCache(buildCacheName(workspace, InfinispanSchema.CACHE_JOBS), "crawlix.CrawlingJob", 1000);
-        initCache(buildCacheName(workspace, InfinispanSchema.CACHE_VISITED), null, 1000);
-        initCache(getContentCacheName(workspace, null), null, 10);
+        initCache(buildCacheName(workspace, InfinispanSchema.CACHE_PLUGINS), null, 1000, -1);
+        initCache(buildCacheName(workspace, InfinispanSchema.CACHE_JOBS), "crawlix.CrawlingJob", 1000, LIFESPAN_JOBS_DAYS);
+        initCache(buildCacheName(workspace, InfinispanSchema.CACHE_VISITED), null, 1000, -1);
+        initCache(getContentCacheName(workspace, null), "crawlix.Content", 10, LIFESPAN_CONTENT_DAYS);
     }
 }

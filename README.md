@@ -26,7 +26,6 @@ The project is currently under active development, and aims to provide the follo
 
 CrawliX is based on [Quarkus](https://quarkus.io/), [Infinispan](https://infinispan.org) and [Selenium](https://www.selenium.dev/documentation/).
 
------
 
 ## Applications:
 

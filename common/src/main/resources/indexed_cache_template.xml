@@ -1,7 +1,5 @@
-<!-- https://docs.jboss.org/infinispan/10.1/configdocs/infinispan-config-10.1.html -->
+<!-- https://infinispan.org/docs/stable/titles/configuring/configuring.html#caches -->
 <!-- Write through configuration -->
-<!-- Load when joining a cluster, read and writes, don't purge on startup -->
-<!-- Data stored in default data dir, per segment -->
 <infinispan>
     <cache-container>
         <distributed-cache name="$CACHE_NAME" owners="1" mode="SYNC" statistics="true">
@@ -9,9 +7,9 @@
                 <key media-type="application/x-protostream"/>
                 <value media-type="application/x-protostream"/>
             </encoding>
-            <memory>
-                <off-heap size="$ENTRIES_IN_MEM"/>
-            </memory>
+            <memory storage="HEAP" max-count="$ENTRIES_IN_MEM"/>
+            <!-- Lifespan $LIFESPAN_DAYS -->
+            <expiration lifespan="$LIFESPAN"/>
             <persistence passivation="false">
                 <file-store read-only="false"
                             purge="false">

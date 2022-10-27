@@ -92,7 +92,7 @@ public class CrawlerNodesManager {
         WorkerNode crawlerWorkerNode = getNode(node);
         try {
             if (crawlerWorkerNode != null) {
-                LOGGER.info("Retrieving javascript" + node);
+                LOGGER.info("Retrieving javascript from: " + node);
                 return getWorkerNodeService(crawlerWorkerNode).javascript();
             }
         } catch (Exception e) {

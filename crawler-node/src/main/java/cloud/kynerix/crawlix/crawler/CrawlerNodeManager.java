@@ -1,5 +1,7 @@
 package cloud.kynerix.crawlix.crawler;
 
+import cloud.kynerix.crawlix.content.Content;
+import cloud.kynerix.crawlix.content.ContentManager;
 import cloud.kynerix.crawlix.crawler.selenium.SeleniumCrawlerExecutor;
 import cloud.kynerix.crawlix.schema.InfinispanSchema;
 import cloud.kynerix.crawlix.workspaces.Workspace;
@@ -13,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+import java.net.HttpURLConnection;
 import java.util.Date;
 import java.util.Random;
 
@@ -50,6 +53,9 @@ public class CrawlerNodeManager {
 
     @Inject
     WorkspaceManager workspaceManager;
+
+    @Inject
+    ContentManager contentManager;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CrawlerNodeManager.class.getName());
 
@@ -120,34 +126,45 @@ public class CrawlerNodeManager {
 
         CrawlingResults results = null;
 
-        boolean deleteJob = false;
+        String nextCrawlerStatus = CrawlingJob.STATUS_RUNNING;
 
         // Execute job
-        String url = crawlingJob == null ? plugin.getDefaultURL() : crawlingJob.getUrl();
+        String url = crawlingJob == null ? plugin.getDefaultURL() : crawlingJob.getURL();
+
         if (crawlingJobsManager.isURLVisited(workspace, url, plugin.getKey())) {
             LOGGER.debug("Already visited: " + url);
-            deleteJob = true;
+            nextCrawlerStatus = CrawlingJob.STATUS_FINISHED_OK;
         } else {
-            results = crawlerExecutor.runBrowserCrawler(workspace, plugin, crawlingJob, persistData);
+            results = crawlerExecutor.runCrawler(workspace, plugin, crawlingJob, persistData);
 
             if (results.isSuccess()) {
                 LOGGER.debug("Crawl is successful. Deleting JOB");
                 plugin.setLastUpdate(new Date());
-                deleteJob = true;
+                nextCrawlerStatus = CrawlingJob.STATUS_FINISHED_OK;
+
+                // Mark URL as visited
+                crawlingJobsManager.visitURL(workspace, plugin.getKey(), url);
             } else {
-                LOGGER.debug("Crawl is NOT successful");
-                if (crawlingJob != null) {
-                    crawlingJob.setConsecutiveFailures(crawlingJob.getConsecutiveFailures() + 1);
-                    if (crawlingJob.getConsecutiveFailures() > MAX_CONSECUTIVE_FAILURES) {
-                        LOGGER.error("Job reached max failures " + MAX_CONSECUTIVE_FAILURES + " : " + crawlingJob);
-                        deleteJob = true;
+                if (results.getHttpCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+                    nextCrawlerStatus = CrawlingJob.STATUS_FINISHED_ERR;
+                } else {
+                    LOGGER.debug("Crawl is NOT successful");
+                    if (crawlingJob != null) {
+                        crawlingJob.setLastError("HTTP Code: " + results.getHttpCode());
+                        crawlingJob.incFailures();
+                        if (crawlingJob.getConsecutiveFailures() > MAX_CONSECUTIVE_FAILURES) {
+                            LOGGER.error("Job reached max failures " + MAX_CONSECUTIVE_FAILURES + " : " + crawlingJob);
+                            nextCrawlerStatus = CrawlingJob.STATUS_FINISHED_ERR;
+                            // Mark URL as visited
+                            crawlingJobsManager.visitURL(workspace, plugin.getKey(), url);
+                        }
                     }
                 }
             }
         }
 
-        if (deleteJob && crawlingJob != null) {
-            crawlingJobsManager.delete(workspace, crawlingJob.getId());
+        if (crawlingJob != null) {
+            crawlingJob.setStatus(nextCrawlerStatus);
         }
 
         return results;
@@ -209,7 +226,15 @@ public class CrawlerNodeManager {
                             LOGGER.debug("Job locked " + crawlingJob);
 
                             CrawlingResults results = runCrawlerExecution(workspace, crawlingJob, plugin, true);
+                            if (results.getHttpCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+                                // Process not found
+                                saveNotFound(workspace, results);
+                            }
 
+                            // Update job
+                            crawlingJobsManager.save(workspace, crawlingJob);
+
+                            // Update plugin
                             pluginsManager.save(workspace, plugin);
                         }
                     }
@@ -219,5 +244,17 @@ public class CrawlerNodeManager {
                 }
             }
         } while (!stopCrawler);
+
+        LOGGER.info("Crawler " + getWorkerNode() + " STOPPED!");
+    }
+
+    void saveNotFound(Workspace workspace, CrawlingResults results) {
+        Content content = new Content();
+        content.setFoundTime(new Date());
+        content.setType("404");
+        content.setUrl(results.getUrl());
+        content.setPlugin(results.getPlugin());
+        content.setTitle("NOT FOUND: " + results.getUrl());
+        contentManager.save(workspace, content);
     }
 }

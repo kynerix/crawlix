@@ -11,7 +11,7 @@
 ```
 podman rm infinispan
 
-podman run --name infinispan -e USER=kynerix -e PASS=crawlix quay.io/infinispan/server:latest
+podman run --name infinispan --network=host -e USER=kynerix -e PASS=crawlix quay.io/infinispan/server:latest
 ```
 The Infinispan console will become available at http://localhost:11222/console/welcome
 

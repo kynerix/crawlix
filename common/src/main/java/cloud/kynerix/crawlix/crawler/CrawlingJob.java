@@ -10,12 +10,19 @@ public class CrawlingJob {
 
     public static final String STATUS_WAITING = "WAITING";
     public static final String STATUS_RUNNING = "RUNNING";
+    public static final String STATUS_FINISHED_OK = "FINISHED_OK";
+    public static final String STATUS_FINISHED_ERR = "FINISHED_ERR";
+
+    public static final String ACTION_PARSE = "PARSE";
+    public static final String ACTION_CHECK = "CHECK";
 
     private Long id;
+    private String action;
     private String plugin;
     private String workspace;
     private String status;
-    private String url;
+    private String URL;
+    private String parentURL;
     private String workerNode;
     private String lastError;
     private Date lastCrawlAttempt = null;
@@ -37,8 +44,8 @@ public class CrawlingJob {
     }
 
     @ProtoField(number = 3, required = true)
-    public String getUrl() {
-        return url;
+    public String getURL() {
+        return URL;
     }
 
     @ProtoField(number = 4)
@@ -79,6 +86,17 @@ public class CrawlingJob {
         return consecutiveFailures;
     }
 
+    @ProtoDoc("@Field(index = Index.YES, store = Store.NO)")
+    @ProtoField(number = 11)
+    public String getParentURL() {
+        return parentURL;
+    }
+
+    @ProtoField(number = 12, defaultValue = ACTION_PARSE)
+    public String getAction() {
+        return action;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -91,8 +109,8 @@ public class CrawlingJob {
         this.plugin = plugin;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    public void setURL(String URL) {
+        this.URL = URL;
     }
 
     public void setWorkerNode(String workerNode) {
@@ -119,12 +137,28 @@ public class CrawlingJob {
         this.workspace = workspace;
     }
 
+    public void setParentURL(String parentURL) {
+        this.parentURL = parentURL;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
+
+    public void incFailures() {
+        this.consecutiveFailures++;
+    }
+
     @Override
     public String toString() {
         return "CrawlingJob{" +
                 "id=" + id +
+                ", action='" + action + '\'' +
                 ", plugin='" + plugin + '\'' +
-                ", url='" + url + '\'' +
+                ", workspace='" + workspace + '\'' +
+                ", status='" + status + '\'' +
+                ", URL='" + URL + '\'' +
+                ", parentURL='" + parentURL + '\'' +
                 ", workerNode='" + workerNode + '\'' +
                 ", lastError='" + lastError + '\'' +
                 ", lastCrawlAttempt=" + lastCrawlAttempt +

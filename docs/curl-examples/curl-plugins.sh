@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 AUTH_TOKEN="00-DEFAULT-TOKEN-00"
-CURL_ARGS="-w \n -s -X "
 
 set -o xtrace
 
@@ -41,7 +40,7 @@ crawlix
     .assertContentCount(2)
 
     // Links
-    .findLinks().filterLinks(null, "id")
+    .linksFind().linksExclude("id").linksAdd()
     .assert( crawlix.linkCount() == 3)
 
   .end()

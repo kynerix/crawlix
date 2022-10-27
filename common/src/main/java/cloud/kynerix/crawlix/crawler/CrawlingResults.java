@@ -11,6 +11,7 @@ public class CrawlingResults {
     private Map<String, Object> parserResults = new HashMap<>();
 
     private boolean success = false;
+    private int httpCode = 0;
 
     private String plugin;
     private String url;
@@ -59,6 +60,10 @@ public class CrawlingResults {
         return error;
     }
 
+    public int getHttpCode() {
+        return httpCode;
+    }
+
     public void setSuccess(boolean success) {
         this.success = success;
     }
@@ -89,5 +94,9 @@ public class CrawlingResults {
 
     public void setError(String error) {
         this.error = error;
+    }
+
+    public void setHttpCode(int httpCode) {
+        this.httpCode = httpCode;
     }
 }
