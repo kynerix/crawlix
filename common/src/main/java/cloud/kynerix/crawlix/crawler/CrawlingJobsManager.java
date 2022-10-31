@@ -137,7 +137,7 @@ public class CrawlingJobsManager {
 
     public void cleanVisitedURLS(Workspace workspace, String pluginKey) {
         infinispanSchema.getQueryFactory(infinispanSchema.getVisitedURLCache(workspace)).create(
-                        "DELETE from crawlix.VisitedURL v where plugin = :plugin")
+                        "DELETE from crawlix.VisitedURL v where v.plugin = :plugin")
                 .setParameter("plugin", pluginKey)
                 .executeStatement();
     }

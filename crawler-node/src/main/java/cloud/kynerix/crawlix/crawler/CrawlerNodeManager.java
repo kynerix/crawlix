@@ -126,7 +126,7 @@ public class CrawlerNodeManager {
 
         CrawlingResults results = null;
 
-        String nextCrawlerStatus = CrawlingJob.STATUS_RUNNING;
+        String nextCrawlerStatus;
 
         // Execute job
         String url = crawlingJob == null ? plugin.getDefaultURL() : crawlingJob.getURL();
@@ -145,19 +145,15 @@ public class CrawlerNodeManager {
                 // Mark URL as visited
                 crawlingJobsManager.visitURL(workspace, plugin.getKey(), url);
             } else {
-                if (results.getHttpCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-                    nextCrawlerStatus = CrawlingJob.STATUS_FINISHED_ERR;
-                } else {
-                    LOGGER.debug("Crawl is NOT successful");
-                    if (crawlingJob != null) {
-                        crawlingJob.setLastError("HTTP Code: " + results.getHttpCode());
-                        crawlingJob.incFailures();
-                        if (crawlingJob.getConsecutiveFailures() > MAX_CONSECUTIVE_FAILURES) {
-                            LOGGER.error("Job reached max failures " + MAX_CONSECUTIVE_FAILURES + " : " + crawlingJob);
-                            nextCrawlerStatus = CrawlingJob.STATUS_FINISHED_ERR;
-                            // Mark URL as visited
-                            crawlingJobsManager.visitURL(workspace, plugin.getKey(), url);
-                        }
+                nextCrawlerStatus = CrawlingJob.STATUS_FINISHED_ERR;
+                LOGGER.debug("Crawl is NOT successful");
+                if (crawlingJob != null) {
+                    crawlingJob.setLastError("HTTP Code: " + results.getHttpCode());
+                    crawlingJob.incFailures();
+                    if (crawlingJob.getConsecutiveFailures() > MAX_CONSECUTIVE_FAILURES) {
+                        LOGGER.error("Job reached max failures " + MAX_CONSECUTIVE_FAILURES + " : " + crawlingJob);
+                        // Mark URL as visited
+                        crawlingJobsManager.visitURL(workspace, plugin.getKey(), url);
                     }
                 }
             }

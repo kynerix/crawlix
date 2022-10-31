@@ -1,7 +1,16 @@
-/* CrawliX
+/* CrawliX library for common parsing operations in crawler plugins.
 
-   Lightweight library for common parsing operations in plugins.
-   Feel free to use the full browser API, if needed.
+   To test your plugin in your local browser, open the Javascript console and paste the following JS snippet:
+
+(function(d, script) {
+script = d.createElement('script');
+script.type = 'text/javascript';
+script.async = true;
+// Replace URL, if different from localhost
+script.src = 'http://localhost:8079/crawlix/javascript';
+d.getElementsByTagName('head')[0].appendChild(script);
+}(document));
+
 */
 
 class CrawliX {
@@ -11,7 +20,13 @@ class CrawliX {
     }
 
     _getResults() {
-        return JSON.stringify(this);
+        return JSON.stringify({
+            _logs: this._logs,
+            _contentFound: this._contentFound,
+            _urlsFound: this._urlsFound,
+            _success: this._success,
+            _logs: this._logs
+        });
     }
 
     _getSeparator() {
@@ -29,8 +44,13 @@ class CrawliX {
 
         this._currentField = 'body';                    // Active content field
         this._currentContent = [{}];                    // Active list of contents parsed
-        this._currentURLs = [];                         // Current list of links found
         this._logs = [];                                // Plugin logs for later analylis
+
+        this._links = new CrawliXLinks(this);
+    }
+
+    links() {
+        return this._links;
     }
 
     linkCount() {
@@ -83,12 +103,12 @@ class CrawliX {
         return this._success;
     }
 
-    setFoundContent( arrayOfContents ) {
+    setFoundContent(arrayOfContents) {
         this._contentFound = arrayOfContents;
         return this;
     }
 
-    setFoundLinks( arrayOfLinksFound ) {
+    setFoundLinks(arrayOfLinksFound) {
         this._urlsFound = arrayOfLinksFound;
         return this;
     }
@@ -143,98 +163,24 @@ class CrawliX {
     // ------------------------------------------------------------------------------------------------------------------------
 
     /*
-     * Links finding for navigation
-     */
-    linksFind(cssSelector = "a", plugin = null) {
-        let urls = Array.from(document.querySelectorAll(cssSelector));
-            
-        let linkObjects = urls.map(link => {
-                return {
-                    url: link.href,
-                    title: link.innerText,
-                    plugin: plugin,
-                    parent: location.href,
-                    action: "parse"
-                }
-            });
-
-        // Remove duplicates
-        linkObjects.filter( (link, index) => {
-            for( let i = index+1; i < linkObjects.length; i++ ) {
-                if( linkObjects[i].url === link.url) return false;
-            }
-            return true;
-        });
-
-        this.log("findLinks - Found " + linkObjects.length + " links");
-
-        this._currentURLs = this._currentURLs.concat(linkObjects);
-
-        return this;
-    }
-
-    linksInclude(hrefInclude) {
-        return this.linksFilter(hrefInclude);
-    }
-
-    linksExclude(hrefExclude) {
-        return this.linksFilter(null, hrefExclude);
-    }
-
-    linksFilter(hrefInclude = null, hrefExclude = null) {
-        return this.linksFilterByExpr(
-            link => {
-                return (hrefInclude == null || link.url.includes(hrefInclude))
-                    && (hrefExclude == null || !link.url.includes(hrefExclude))
-            }
-        )
-    }
-
-    linksFilterByExpr( evalFunction ) {
-        let initialCount = this._currentURLs.length;
-
-        if( evalFunction != null ) {         
-            this._currentURLs = this._currentURLs.filter(evalFunction);
-        }
-
-        this.log("filterLinksExpr - " + this._currentURLs.length + " links out of " + initialCount);
-        return this;
-    }
-
-    linksAction(linkAction) {
-        this._currentURLs.forEach( link => { link.action = linkAction })
-        return this;
-    }
-
-    linksAdd() {
-        this.log("Adding " + this._currentURLs.length + " links" );
-        this._urlsFound = this._urlsFound.concat(this._currentURLs);
-        this._currentURLs = [];
-        return this;
-    }
-
-
-    // ------------------------------------------------------------------------------------------------------------------------
-
-    /*
      * Single content extraction
      */
-    parseAttributeValue(cssSelector, attribute ) {
-        return this.parse( cssSelector, attribute);
+    parseAttributeValue(cssSelector, attribute) {
+        return this.parse(cssSelector, attribute);
     }
 
     parseFirst(cssSelector) {
-        return this.parse( cssSelector, null, false);
+        return this.parse(cssSelector, null, false);
     }
 
     parseMultiple(cssSelector) {
-        return this.parse( cssSelector, null, true);
+        return this.parse(cssSelector, null, true);
     }
 
     parse(cssSelector, attribute = null, selectMultipleEntities = false) {
         let selectedEntities = Array.from(document.querySelectorAll(cssSelector));
-        if( !selectMultipleEntities && selectedEntities.length > 1 ) {
-            selectedEntities = [ selectedEntities[0] ];
+        if (!selectMultipleEntities && selectedEntities.length > 1) {
+            selectedEntities = [selectedEntities[0]];
         }
         let contentHit = selectedEntities.map(
             // Extract either attribute value or tag content
@@ -259,7 +205,7 @@ class CrawliX {
     }
 
     setValues(value) {
-        this._currentContent.forEach( c=> { c[this._currentField] = value;} )
+        this._currentContent.forEach(c => { c[this._currentField] = value; })
         return this;
     }
 
@@ -461,10 +407,10 @@ class CrawliX {
         keys.forEach(k => {
             // Aggregate all values for all objects properties under k
             let values = contents
-                            .map(v => { return v[k]; })
-                            .filter( v=> {return v;});   // Remove undefined
+                .map(v => { return v[k]; })
+                .filter(v => { return v; });   // Remove undefined
 
-            joinContent[k] = values.join( this._getSeparator() );
+            joinContent[k] = values.join(this._getSeparator());
         });
 
         this._currentContent = [joinContent];
@@ -488,14 +434,14 @@ class CrawliX {
         this.log("addContents - Total contents: " + this._contentFound.length);
 
         this._currentContent = [{}];
-
+            
         return this;
     }
 
-    removeTags( cssSelector ) {
+    removeTags(cssSelector) {
         let totalRemoved = 0;
-        document.querySelectorAll( cssSelector ).forEach(
-            node=> {
+        document.querySelectorAll(cssSelector).forEach(
+            node => {
                 node.remove();
                 totalRemoved++;
             }
@@ -503,6 +449,91 @@ class CrawliX {
 
         this.log("removeTags - " + cssSelector + " : removed " + totalRemoved);
         return this;
+    }
+}
+
+// ------------------------------------------------------------------------------------------------------------------------
+
+class CrawliXLinks {
+    constructor(crawlix) {
+        this.crawlix = crawlix;
+        this._currentURLs = [];      // Current list of links found
+    }
+
+    find(cssSelector = "a", plugin = null) {
+        let urls = Array.from(document.querySelectorAll(cssSelector));
+
+        let linkObjects = urls.map(link => {
+            return {
+                url: link.href,
+                title: link.innerText,
+                plugin: plugin,
+                parent: location.href,
+                action: "parse"
+            }
+        });
+
+        // Remove duplicates
+        linkObjects.filter((link, index) => {
+            for (let i = index + 1; i < linkObjects.length; i++) {
+                if (linkObjects[i].url === link.url) return false;
+            }
+            return true;
+        });
+
+        this.crawlix.log("findLinks - Found " + linkObjects.length + " links");
+
+        this._currentURLs = this._currentURLs.concat(linkObjects);
+
+        return this;
+    }
+
+    include(hrefInclude) {
+        return this.filter(hrefInclude);
+    }
+
+    exclude(hrefExclude) {
+        return this.filter(null, hrefExclude);
+    }
+
+    filter(hrefInclude = null, hrefExclude = null) {
+        return this.filterByExpr(
+            link => {
+                return (hrefInclude == null || link.url.includes(hrefInclude))
+                    && (hrefExclude == null || !link.url.includes(hrefExclude))
+            }
+        )
+    }
+
+    filterByExpr(evalFunction) {
+        let initialCount = this._currentURLs.length;
+
+        if (evalFunction != null) {
+            this._currentURLs = this._currentURLs.filter(evalFunction);
+        }
+
+        this.crawlix.log("filterLinksExpr - " + this._currentURLs.length + " links out of " + initialCount);
+        return this;
+    }
+
+    check() {
+        return this.action("check");
+    }
+
+    analyze() {
+        return this.action("parse");
+    }
+
+    action(linkAction) {
+        this._currentURLs.forEach(link => { link.action = linkAction })
+        return this;
+    }
+
+    add() {
+        this.crawlix.log("Adding " + this._currentURLs.length + " links");
+        this.crawlix._urlsFound = this.crawlix._urlsFound.concat(this._currentURLs);
+        this._currentURLs = [];
+        return this.crawlix;
     }
 }
 
