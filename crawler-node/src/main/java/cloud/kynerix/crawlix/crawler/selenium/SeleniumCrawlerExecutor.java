@@ -293,10 +293,13 @@ public class SeleniumCrawlerExecutor {
                 return results;
             }
 
-            // Inject JS and plugin JS to initialize context
-            String customJS = plugin.getScript() == null ? "" : plugin.getScript();
+            // Inject context JS (optional), library and plugin JS
+            String pluginJS = plugin.getScript() == null ? null : plugin.getScript();
             String libraryURL = JAVASCRIPT_URL + JAVASCRIPT_LIBRARY;
-            injectJSLibrary(driver, libraryURL, customJS);
+            if (plugin.getContextScript() != null) {
+                injectJS(driver, plugin.getContextScript());
+            }
+            injectJSLibrary(driver, libraryURL, pluginJS);
             waitForProcessing();
 
             // Save results

@@ -49,6 +49,21 @@ class CrawliX {
         this._links = new CrawliXLinks(this);
     }
 
+    requiredParam(param) {
+        try {
+            if (typeof eval(param) !== 'undefined') {
+                this.log("PARAMETER: '" + param + "' = '" + eval(param) + "'");
+                return this;
+            }
+        } catch (e) {
+            // Do nothing
+        }
+
+        this.fail();
+        this.log("REQUIRED parameter '" + param + "' is not defined.");
+        return this.end();
+    }
+
     links() {
         return this._links;
     }
@@ -434,7 +449,7 @@ class CrawliX {
         this.log("addContents - Total contents: " + this._contentFound.length);
 
         this._currentContent = [{}];
-            
+
         return this;
     }
 

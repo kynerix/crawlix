@@ -14,6 +14,7 @@ public class Plugin {
     private String status;
     private String defaultURL;
     private String script;
+    private String scriptURL;
 
     private int loadPauseMs;
     private int browserWidth = 1280;
@@ -21,6 +22,8 @@ public class Plugin {
     private int watchFrequencySeconds = 3600;
 
     private Date lastUpdate;
+
+    private String contextScript;
 
     @ProtoField(number = 1)
     public String getKey() {
@@ -67,6 +70,15 @@ public class Plugin {
         return lastUpdate;
     }
 
+    @ProtoField(number = 10)
+    public String getScriptURL() {
+        return scriptURL;
+    }
+
+    @ProtoField(number = 11)
+    public String getContextScript() {
+        return contextScript;
+    }
 
     public void setKey(String key) {
         this.key = key;
@@ -108,6 +120,14 @@ public class Plugin {
         return STATUS_ENABLED.equals(this.status);
     }
 
+    public void setScriptURL(String scriptURL) {
+        this.scriptURL = scriptURL;
+    }
+
+    public void setContextScript(String contextScript) {
+        this.contextScript = contextScript;
+    }
+
     public boolean isValid() {
         return getKey() != null &&
                 getKey().chars().allMatch((c) -> Character.isLetterOrDigit(c) || c == '-' || c == '_') &&
@@ -121,11 +141,13 @@ public class Plugin {
                 ", status='" + status + '\'' +
                 ", defaultURL='" + defaultURL + '\'' +
                 ", script='" + script + '\'' +
+                ", scriptURL='" + scriptURL + '\'' +
                 ", loadPauseMs=" + loadPauseMs +
                 ", browserWidth=" + browserWidth +
                 ", browserHeight=" + browserHeight +
                 ", watchFrequencySeconds=" + watchFrequencySeconds +
                 ", lastUpdate=" + lastUpdate +
+                ", contextScript='" + contextScript + '\'' +
                 '}';
     }
 }

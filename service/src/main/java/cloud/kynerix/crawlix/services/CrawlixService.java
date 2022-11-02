@@ -202,6 +202,8 @@ public class CrawlixService extends BaseService {
             return operationResults(false, "Plugin " + pluginKey + " not found");
         }
 
+        pluginsManager.checkScriptURLForUpdate(workspace, plugin);
+
         // Execute remotely and return response
         WorkerNode node = workerNodesManager.getRandomNode();
         if (node == null || !node.isActive()) {

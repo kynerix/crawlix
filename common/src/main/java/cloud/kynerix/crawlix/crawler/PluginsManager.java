@@ -7,8 +7,12 @@ import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Scanner;
 
 @ApplicationScoped
 public class PluginsManager {
@@ -44,5 +48,23 @@ public class PluginsManager {
             filtered.removeIf(c -> !status.equalsIgnoreCase(c.getStatus()));
         }
         return filtered;
+    }
+
+    public void checkScriptURLForUpdate(Workspace workspace, Plugin plugin) {
+        if (plugin == null) return;
+        if (plugin.getScriptURL() == null) return;
+
+        // Try to load script from URL and update the script body if needed
+        try {
+            String scriptBody = new Scanner(new URL(plugin.getScriptURL()).openStream(), "UTF-8").useDelimiter("\\A").next();
+            if (scriptBody != null && !scriptBody.trim().isEmpty()) {
+                LOGGER.debug("Updating plugin script from " + plugin.getScriptURL());
+                scriptBody = "// Updated from " + plugin.getScriptURL() + " at " + new Date() + "\n\r" + scriptBody;
+                plugin.setScript(scriptBody);
+                save(workspace, plugin);
+            }
+        } catch (IOException e) {
+            LOGGER.error("Error loading script URL: " + plugin.getScriptURL(), e);
+        }
     }
 }
