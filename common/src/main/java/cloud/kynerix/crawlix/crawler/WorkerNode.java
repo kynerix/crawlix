@@ -14,7 +14,7 @@ public class WorkerNode {
     private String publicURI;
     private String status;
     private String message;
-    private Date lastInit = null;
+    private Date lastStartTime = null;
 
     public boolean isActive() {
         return key.equalsIgnoreCase("localhost") || WorkerNode.STATUS_READY.equalsIgnoreCase(status);
@@ -41,8 +41,8 @@ public class WorkerNode {
     }
 
     @ProtoField(number = 5)
-    public Date getLastInit() {
-        return lastInit;
+    public Date getLastStartTime() {
+        return lastStartTime;
     }
 
     public void setKey(String key) {
@@ -61,8 +61,8 @@ public class WorkerNode {
         this.message = message;
     }
 
-    public void setLastInit(Date lastInit) {
-        this.lastInit = lastInit;
+    public void setLastStartTime(Date lastStartTime) {
+        this.lastStartTime = lastStartTime;
     }
 
     @Override
@@ -72,7 +72,7 @@ public class WorkerNode {
                 ", publicURI='" + publicURI + '\'' +
                 ", status='" + status + '\'' +
                 ", message='" + message + '\'' +
-                ", lastInit=" + lastInit +
+                ", lastInit=" + lastStartTime +
                 '}';
     }
 }

@@ -61,31 +61,30 @@ public class CrawlerNodesManager {
         }
     }
 
-    public Response startNode(String node) {
+    public boolean startNode(String node) {
         WorkerNode crawlerWorkerNode = getNode(node);
         try {
             if (crawlerWorkerNode != null) {
                 LOGGER.info("Starting node " + node);
-                CrawlerNodeClient crawlerService = getWorkerNodeService(crawlerWorkerNode);
-                return crawlerService.startNode();
+                return getWorkerNodeService(crawlerWorkerNode).startNode() != null;
             }
         } catch (Exception e) {
             LOGGER.error("Error starting node", e);
         }
-        return Response.ok(Boolean.FALSE).build();
+        return false;
     }
 
-    public Response stopNode(String node) {
+    public boolean stopNode(String node) {
         WorkerNode crawlerWorkerNode = getNode(node);
         try {
             if (crawlerWorkerNode != null) {
                 LOGGER.info("Stopping  node " + node);
-                return getWorkerNodeService(crawlerWorkerNode).stopNode();
+                return getWorkerNodeService(crawlerWorkerNode).stopNode() != null;
             }
         } catch (Exception e) {
-            LOGGER.error("Error starting node", e);
+            LOGGER.error("Error stopping node", e);
         }
-        return null;
+        return false;
     }
 
     public Response getJavascript(String node) {
@@ -107,7 +106,7 @@ public class CrawlerNodesManager {
             LOGGER.info("Running remote crawler " + pluginKey + " in node " + node);
             return getWorkerNodeService(crawlerWorkerNode).execute(workspaceKey, pluginKey, storeResults);
         } else {
-            return  null;
+            return null;
         }
     }
 }

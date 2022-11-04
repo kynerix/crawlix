@@ -68,6 +68,7 @@ public class CrawlerNodeManager {
             LOGGER.info("Starting node '" + node.getKey() + "' at URL '" + PUBLIC_URI + "'");
             if (AUTOSTART) {
                 node.setStatus(WorkerNode.STATUS_READY);
+                node.setLastStartTime(new Date());
             } else {
                 node.setStatus(WorkerNode.STATUS_STOPPED);
             }
@@ -96,7 +97,7 @@ public class CrawlerNodeManager {
 
     public void start() {
         WorkerNode crawlerWorkerNode = getWorkerNode();
-        crawlerWorkerNode.setLastInit(new Date());
+        crawlerWorkerNode.setLastStartTime(new Date());
         crawlerWorkerNode.setStatus(WorkerNode.STATUS_READY);
         save(crawlerWorkerNode);
 

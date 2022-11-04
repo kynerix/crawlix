@@ -28,6 +28,7 @@ public class CrawlixService extends BaseService {
 
         if (plugin.isValid()) {
             pluginsManager.save(workspace, plugin);
+            pluginsManager.checkScriptURLForUpdate(workspace, plugin);
             return operationResults(true, "Plugin " + plugin.getKey() + " updated");
         } else {
             LOGGER.error("Invalid plugin definition: " + plugin);
@@ -54,6 +55,7 @@ public class CrawlixService extends BaseService {
             try {
                 if (plugin.isValid()) {
                     pluginsManager.save(workspace, plugin);
+                    pluginsManager.checkScriptURLForUpdate(workspace, plugin);
                 } else {
                     LOGGER.error("Invalid plugin definition: " + plugin);
                 }

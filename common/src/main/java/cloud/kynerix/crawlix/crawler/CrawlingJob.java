@@ -10,8 +10,8 @@ public class CrawlingJob {
 
     public static final String STATUS_WAITING = "WAITING";
     public static final String STATUS_RUNNING = "RUNNING";
-    public static final String STATUS_FINISHED_OK = "FINISHED_OK";
-    public static final String STATUS_FINISHED_ERR = "FINISHED_ERR";
+    public static final String STATUS_FINISHED_OK = "OK";
+    public static final String STATUS_FINISHED_ERR = "ERROR";
 
     public static final String ACTION_PARSE = "PARSE";
     public static final String ACTION_CHECK = "CHECK";
@@ -22,6 +22,7 @@ public class CrawlingJob {
     private String workspace;
     private String status;
     private String URL;
+    private String context;
     private String parentURL;
     private String workerNode;
     private String lastError;
@@ -43,7 +44,8 @@ public class CrawlingJob {
         return status;
     }
 
-    @ProtoField(number = 3, required = true)
+    @ProtoField(number = 3, required = true,name = "URL")
+    @ProtoDoc("@Field(index = Index.YES, store = Store.NO)")
     public String getURL() {
         return URL;
     }
@@ -97,6 +99,11 @@ public class CrawlingJob {
         return action;
     }
 
+    @ProtoField(number = 13)
+    public String getContext() {
+        return context;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -145,6 +152,10 @@ public class CrawlingJob {
         this.action = action;
     }
 
+    public void setContext(String context) {
+        this.context = context;
+    }
+
     public void incFailures() {
         this.consecutiveFailures++;
     }
@@ -158,6 +169,7 @@ public class CrawlingJob {
                 ", workspace='" + workspace + '\'' +
                 ", status='" + status + '\'' +
                 ", URL='" + URL + '\'' +
+                ", context='" + context + '\'' +
                 ", parentURL='" + parentURL + '\'' +
                 ", workerNode='" + workerNode + '\'' +
                 ", lastError='" + lastError + '\'' +

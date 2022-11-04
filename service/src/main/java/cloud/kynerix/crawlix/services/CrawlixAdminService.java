@@ -1,4 +1,4 @@
-    package cloud.kynerix.crawlix.services;
+package cloud.kynerix.crawlix.services;
 
 import cloud.kynerix.crawlix.crawler.CrawlingJob;
 import cloud.kynerix.crawlix.nodes.CrawlerNodesManager;
@@ -82,7 +82,7 @@ public class CrawlixAdminService extends BaseService {
         return Response.ok(jobs).build();
     }
 
-    @GET
+    @POST
     @Path("/create-workspace")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
@@ -153,7 +153,7 @@ public class CrawlixAdminService extends BaseService {
     }
 
 
-    @POST
+    @PUT
     @Path("/generate-token")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
@@ -182,7 +182,7 @@ public class CrawlixAdminService extends BaseService {
         return operationResults(true, "New token '" + token + "' for workspace '" + workspace.getKey() + "' has been generated.");
     }
 
-    @GET
+    @PUT
     @Path("/start-node")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
@@ -195,14 +195,15 @@ public class CrawlixAdminService extends BaseService {
         }
 
         if (crawlerWorkerNodesManager.getNode(node) == null) {
-            return operationResults(false, "Node " + node + " does not exist");
+            return operationResults(false, "Node '" + node + "' does not exist");
+        } else if (crawlerWorkerNodesManager.startNode(node)) {
+            return operationResults(true, "Node '" + node + "' has been started");
+        } else {
+            return operationResults(false, "Error starting node '" + node + "'");
         }
-
-        crawlerWorkerNodesManager.startNode(node);
-        return operationResults(true, "Node " + node + " has been started");
     }
 
-    @GET
+    @PUT
     @Path("/stop-node")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)

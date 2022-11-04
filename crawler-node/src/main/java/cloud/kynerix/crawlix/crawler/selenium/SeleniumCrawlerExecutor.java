@@ -23,6 +23,8 @@ import org.slf4j.LoggerFactory;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -188,29 +190,52 @@ public class SeleniumCrawlerExecutor {
         return HttpURLConnection.HTTP_OK;
     }
 
+    String normalizeURL(String url) {
+        if (url == null) return null;
+
+        url = url.trim();
+
+        try {
+            String normalizedURL = new URL(url).toExternalForm();
+            LOGGER.debug("Normalized url: " + normalizedURL);
+            return normalizedURL;
+        } catch (MalformedURLException e) {
+            LOGGER.error("Invalid URL: '" + url + "'");
+        }
+        return null;
+    }
+
     List<CrawlingJob> createURLFoundJobs(Workspace workspace, Map jsonParsedResults, Plugin plugin, boolean persist) {
         List<CrawlingJob> jobs = new ArrayList<>();
 
         List<Map> urls = (List<Map>) jsonParsedResults.get("_urlsFound");
         if (urls != null && !urls.isEmpty()) {
             for (Map urlObject : urls) {
-                String url = (String) urlObject.get("url");
-                String text = (String) urlObject.get("text");
+                String url = normalizeURL((String) urlObject.get("url"));
+                String text = (String) urlObject.get("title");
                 String pluginKey = (String) urlObject.get("plugin");
                 String parent = (String) urlObject.get("parent");
                 String action = (String) urlObject.get("action");
 
                 String targetPlugin = pluginKey == null ? plugin.getKey() : pluginKey;
 
-                if (url != null && !crawlingJobsManager.isURLVisited(workspace, targetPlugin, url)) {
+                if (url != null                                                             // URL must be valid
+                        && !crawlingJobsManager.isURLVisited(workspace, targetPlugin, url)  // Do not visit the same URL multiple times over a scan
+                        && !crawlingJobsManager.existsJob(workspace, targetPlugin, url)     // Do not create the same job for the same URL multiple times
+                ) {
                     CrawlingJob job = crawlingJobsManager.newJob(workspace, targetPlugin, url, parent);
                     if (action != null) {
                         job.setAction(action.toUpperCase());
+                    }
+                    if( text != null ) {
+                        job.setContext("[" + text + "]");
                     }
                     if (persist) {
                         crawlingJobsManager.save(workspace, job);
                     }
                     jobs.add(job);
+                } else {
+                    LOGGER.debug("Skipping job creation: " + url);
                 }
             }
         }

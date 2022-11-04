@@ -10,6 +10,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.Date;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -129,6 +130,17 @@ public class CrawlingJobsManager {
         visitedURL.setPlugin(pluginKey);
         visitedURL.setDate(new Date());
         infinispanSchema.getVisitedURLCache(workspace).put(pluginKey + "|" + url, visitedURL);
+    }
+
+    public boolean existsJob(Workspace workspace, String pluginKey, String url) {
+        OptionalLong nResults = infinispanSchema.getQueryFactory(infinispanSchema.getJobsCache(workspace))
+                .create("FROM crawlix.CrawlingJob j " +
+                        "WHERE plugin=:plugin AND URL=:url " +
+                        "ORDER BY j.lastCrawlAttempt DESC")
+                .setParameter("plugin", pluginKey)
+                .setParameter("url", url)
+                .execute().hitCount();
+        return !nResults.isEmpty() && nResults.getAsLong() > 0;
     }
 
     public boolean isURLVisited(Workspace workspace, String pluginKey, String url) {
