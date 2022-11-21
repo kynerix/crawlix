@@ -1,6 +1,7 @@
 package cloud.kynerix.crawlix.services;
 
 import cloud.kynerix.crawlix.crawler.CrawlingJob;
+import cloud.kynerix.crawlix.crawler.Plugin;
 import cloud.kynerix.crawlix.nodes.CrawlerNodesManager;
 import cloud.kynerix.crawlix.workspaces.Workspace;
 
@@ -80,6 +81,32 @@ public class CrawlixAdminService extends BaseService {
         }
 
         return Response.ok(jobs).build();
+    }
+
+    @GET
+    @Path("/list-plugins")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response listPlugins(
+            @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
+            @QueryParam("workspace") String paramWorkspace
+    ) {
+        if (!authManager.isAdmin(authHeader)) {
+            return noAuth();
+        }
+
+        List<Plugin> plugins;
+
+        if (paramWorkspace == null) {
+            plugins = pluginsManager.getAllPlugins();
+        } else {
+            Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
+            plugins = pluginsManager.getAllPlugins(workspace);
+        }
+
+        LOGGER.info("Listed " + plugins.size() + " crawler plugins");
+
+        return Response.ok(plugins).build();
     }
 
     @POST
@@ -217,9 +244,10 @@ public class CrawlixAdminService extends BaseService {
 
         if (crawlerWorkerNodesManager.getNode(node) == null) {
             return operationResults(false, "Node " + node + " does not exist");
+        } else if (crawlerWorkerNodesManager.stopNode(node)) {
+            return operationResults(true, "Node " + node + " has been stopped");
+        } else {
+            return operationResults(false, "Error stopping node '" + node + "'");
         }
-
-        crawlerWorkerNodesManager.stopNode(node);
-        return operationResults(true, "Node " + node + " has been stopped");
     }
 }

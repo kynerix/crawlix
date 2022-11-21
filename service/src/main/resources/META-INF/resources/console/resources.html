@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" class="pf-m-redhat-font">
+
+<head>
+    <title>Crawlix Console</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/patternfly.css">
+    <link rel="stylesheet" href="css/patternfly-addons.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.js"></script>
+
+    <!-- Console javascript -->
+    <script src="js/console-common.js"></script>
+</head>
+
+<body>
+
+    <div class="pf-c-page">
+
+        <!-- Header -->
+        <header class="pf-c-masthead">
+            <div class="pf-c-masthead__main">
+                <a class="pf-c-masthead__brand" href="#">
+                    <img src="https://www.patternfly.org/v4/assets/images/logo__pf--reverse--base.png"
+                        alt="Fallback patternFly default logo" />
+                </a>
+            </div>
+            <div class="pf-c-masthead__content">
+                <div class="pf-c-toolbar pf-m-full-height pf-m-static">
+                    <div class="pf-c-toolbar__content">
+                        <div class="pf-c-toolbar__content-section">
+                            <div
+                                class="pf-c-toolbar__group pf-m-icon-button-group pf-m-align-right pf-m-spacer-none pf-m-spacer-md-on-md">
+                                <div class="pf-c-toolbar__item pf-m-hidden pf-m-visible-on-sm">
+                                    <div class="pf-c-dropdown pf-m-full-height"
+                                        style="--pf-c-dropdown--MaxWidth: 20ch;">
+                                        <span class="pf-c-dropdown__toggle-image">
+                                            <img class="pf-c-avatar" alt="Avatar image"
+                                                src="/console/css/assets/images/img_avatar-light.svg" />
+                                        </span>
+                                        <span class="pf-c-dropdown__toggle-text">My Username</span>
+                                        <div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- End of Header -->
+
+        <!-- SIDEBAR BEGIN -->
+        <div class="pf-c-page__sidebar">
+            <div class="pf-c-page__sidebar-body">
+                <nav class="pf-c-nav" id="compact-demo-primary-nav" aria-label="Global">
+                    <ul class="pf-c-nav__list">
+                        <li class="pf-c-nav__item">
+                            <a href="/console/plugins.html" class="pf-c-nav__link" aria-current="page">Plugins</a>
+                        </li>
+                        <li class="pf-c-nav__item">
+                            <a href="/console/nodes.html" class="pf-c-nav__link">Crawler nodes</a>
+                        </li>
+                        <li class="pf-c-nav__item">
+                            <a href="/console/workspaces.html" class="pf-c-nav__link">Workspaces</a>
+                        </li>
+                        <li class="pf-c-nav__item">
+                            <a href="/console/jobs.html" class="pf-c-nav__link">Jobs</a>
+                        </li>
+                        <li class="pf-c-nav__item">
+                            <a href="/console/resources.html" class="pf-c-nav__link pf-m-current">Resources</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        <!-- SIDEBAR END -->
+
+        <main class="pf-c-page__main" tabindex="-1">
+
+            <!-- TITLE -->
+            <section class="pf-c-page__main-section pf-m-limit-width pf-m-light">
+
+                <div class="pf-c-page__main-body">
+
+                    <div class="pf-c-content">
+                        <h1>Resources</h1>
+                        <p>Utilities and resources.</p>
+                    </div>
+                </div>
+            </section>
+            <!-- END OF TITLE -->
+            <section class="pf-c-page__main-section pf-m-no-padding pf-m-padding-on-xl">
+                <div class="pf-c-card" style="padding: 20px">
+                    <br>
+                    <strong>REST API</strong>
+                    <ul>
+                        <li><a href="/q/openapi">Open API Schema document</a></li>
+                        <li><a href="/q/swagger-ui">Open API UI</a></li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- END TABLE -->
+        </main>
+    </div>
+</body>
+
+</html>

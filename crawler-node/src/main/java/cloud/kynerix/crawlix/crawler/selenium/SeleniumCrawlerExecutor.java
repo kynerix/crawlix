@@ -25,9 +25,11 @@ import javax.inject.Inject;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+@SuppressWarnings("ALL")
 @ApplicationScoped
 public class SeleniumCrawlerExecutor {
 
@@ -65,7 +67,7 @@ public class SeleniumCrawlerExecutor {
         LOGGER.debug("Injected JS snippet");
     }
 
-    WebDriver buildLocalDriver() throws Exception {
+    WebDriver buildLocalDriver() {
 
         System.setProperty(GeckoDriverService.GECKO_DRIVER_EXE_PROPERTY, GECKO_DRIVER_PATH);
         System.setProperty(FirefoxDriver.SystemProperty.BROWSER_LOGFILE, "/dev/null");
@@ -117,7 +119,7 @@ public class SeleniumCrawlerExecutor {
     void waitForLoad() {
         try {
             LOGGER.debug("Waiting " + WAIT_SECS + " sec");
-            Thread.currentThread().sleep(WAIT_SECS * 1000);
+            Thread.sleep(WAIT_SECS * 1000);
         } catch (InterruptedException e) {
 
         }
@@ -126,17 +128,16 @@ public class SeleniumCrawlerExecutor {
     void waitForProcessing() {
         try {
             LOGGER.debug("Waiting 500ms");
-            Thread.currentThread().sleep(500);
+            Thread.sleep(500);
         } catch (InterruptedException e) {
 
         }
     }
 
     Object executeJS(WebDriver driver, String js) {
-        String script = js;
         Object result = null;
         try {
-            result = ((JavascriptExecutor) driver).executeScript(script);
+            result = ((JavascriptExecutor) driver).executeScript(js);
         } catch (Exception e) {
             LOGGER.error("Error executing script: \n" + js + "\n", e);
         }
@@ -381,7 +382,7 @@ public class SeleniumCrawlerExecutor {
 
     public String getJavascriptLibraryContent() {
         try {
-            return new Scanner(this.getClass().getResourceAsStream("/META-INF/resources" + JAVASCRIPT_LIBRARY), "UTF-8").useDelimiter("\\A").next();
+            return new Scanner(this.getClass().getResourceAsStream("/META-INF/resources" + JAVASCRIPT_LIBRARY), StandardCharsets.UTF_8).useDelimiter("\\A").next();
         } catch (Exception e) {
             LOGGER.error("Error retrieving Javascript", e);
             return null;

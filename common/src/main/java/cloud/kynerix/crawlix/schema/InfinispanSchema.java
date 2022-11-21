@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 @ApplicationScoped
@@ -93,7 +94,7 @@ public class InfinispanSchema {
         }
 
         String xml = new Scanner(
-                this.getClass().getResourceAsStream(template), "UTF-8")
+                this.getClass().getResourceAsStream(template), StandardCharsets.UTF_8)
                 .useDelimiter("\\A")
                 .next()
                 .replace("$CACHE_NAME", cacheName)

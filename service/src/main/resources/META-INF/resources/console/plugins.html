@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en" class="pf-m-redhat-font">
+
+<head>
+    <title>Crawlix Console</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/patternfly.css">
+    <link rel="stylesheet" href="css/patternfly-addons.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.js"></script>
+
+    <!-- Console javascript -->
+    <script src="js/console-common.js"></script>
+</head>
+
+<body>
+
+    <div class="pf-c-page">
+
+        <!-- Header -->
+        <header class="pf-c-masthead">
+            <div class="pf-c-masthead__main">
+                <a class="pf-c-masthead__brand" href="#">
+                    <img src="https://www.patternfly.org/v4/assets/images/logo__pf--reverse--base.png"
+                        alt="Fallback patternFly default logo" />
+                </a>
+            </div>
+            <div class="pf-c-masthead__content">
+                <div class="pf-c-toolbar pf-m-full-height pf-m-static">
+                    <div class="pf-c-toolbar__content">
+                        <div class="pf-c-toolbar__content-section">
+                            <div
+                                class="pf-c-toolbar__group pf-m-icon-button-group pf-m-align-right pf-m-spacer-none pf-m-spacer-md-on-md">
+                                <div class="pf-c-toolbar__item pf-m-hidden pf-m-visible-on-sm">
+                                    <div class="pf-c-dropdown pf-m-full-height"
+                                        style="--pf-c-dropdown--MaxWidth: 20ch;">
+                                        <span class="pf-c-dropdown__toggle-image">
+                                            <img class="pf-c-avatar" alt="Avatar image"
+                                                src="/console/css/assets/images/img_avatar-light.svg" />
+                                        </span>
+                                        <span class="pf-c-dropdown__toggle-text">My Username</span>
+                                        <div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- End of Header -->
+
+        <!-- SIDEBAR BEGIN -->
+        <div class="pf-c-page__sidebar">
+            <div class="pf-c-page__sidebar-body">
+                <nav class="pf-c-nav" id="compact-demo-primary-nav" aria-label="Global">
+                    <ul class="pf-c-nav__list">
+                        <li class="pf-c-nav__item">
+                            <a href="/console/plugins.html" class="pf-c-nav__link pf-m-current"
+                                aria-current="page">Plugins</a>
+                        </li>
+                        <li class="pf-c-nav__item">
+                            <a href="/console/nodes.html" class="pf-c-nav__link">Crawler nodes</a>
+                        </li>
+                        <li class="pf-c-nav__item">
+                            <a href="/console/workspaces.html" class="pf-c-nav__link">Workspaces</a>
+                        </li>
+                        <li class="pf-c-nav__item">
+                            <a href="/console/jobs.html" class="pf-c-nav__link">Jobs</a>
+                        </li>
+                        <li class="pf-c-nav__item">
+                            <a href="/console/resources.html" class="pf-c-nav__link">Resources</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        <!-- SIDEBAR END -->
+
+        <main class="pf-c-page__main" tabindex="-1">
+
+            <!-- TITLE -->
+            <section class="pf-c-page__main-section pf-m-limit-width pf-m-light">
+
+                <div class="pf-c-page__main-body">
+
+                    <div class="pf-c-content">
+                        <h1>Plugins</h1>
+                        <p>List of available crawler descriptors.</p>
+                    </div>
+                </div>
+            </section>
+            <!-- END OF TITLE -->
+
+            <!-- BEGIN TABLE -->
+
+            <section class="pf-c-page__main-section pf-m-no-padding pf-m-padding-on-xl">
+
+                <!-- Alerts Success / Warning errors -->
+                <div class="pf-c-alert pf-m-info" aria-label="Information alert"
+                    style="margin-bottom: 20px; display: none;" id="successMsg">
+                    <div class="pf-c-alert__icon">
+                        <i class="fas fa-fw fa-info-circle" aria-hidden="true"></i>
+                    </div>
+                    <p class="pf-c-alert__title">
+                        Operation has been successful.
+                    </p>
+                </div>
+
+                <div class="pf-c-alert pf-m-danger" id="errorMsg" aria-label="Danger alert"
+                    style="margin-bottom: 20px; display:none">
+                    <div class="pf-c-alert__icon">
+                        <i class="fas fa-fw fa-exclamation-circle" aria-hidden="true"></i>
+                    </div>
+                    <p class="pf-c-alert__title">
+                        <span id="errorTxt"></span>
+                    </p>
+                </div>
+                <!-- End of alerts / Errors -->
+
+                <div class="pf-c-card" style="padding: 20px">
+                    <table id="data-table" class="display compact" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>Key</th>
+                                <th>Workspace</th>
+                                <th>Status</th>
+                                <th>Last update</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </section>
+
+            <!-- END TABLE -->
+        </main>
+    </div>
+
+    <script>
+
+        function initTable() {
+            // DataTable Config
+            $("#data-table").DataTable({
+                columns: [
+                    { data: "key" },
+                    { data: "workspace" },
+                    { data: "status" },
+                    {
+                        render:
+                            function (data, type, rowData, meta) {
+                                return renderDate(rowData.lastUpdate);
+                            }
+                    },
+                    {
+                        data: null,
+                        render: function (data, type, full, meta) {
+                            // Inline action kebab renderer
+                            return renderMenu(
+                                [
+                                    { title: "View", action: "viewPlugin('" + data.key + "', refreshTable)" },
+                                    { title: "Enable", action: "enablePlugin('" + data.key + "', refreshTable)" },
+                                    { title: "Disable", action: "disablePlugin('" + data.key + "', refreshTable)" },
+                                    { title: "Test", action: "testPlugin('" + data.key + "', refreshTable)" },
+                                    { title: "Execute", action: "executePlugin('" + data.key + "', refreshTable)" },
+                                    { title: "Delete", action: "deletePlugin('" + data.key + "', refreshTable)" },
+                                ]);
+                        }
+                    }
+                ],
+                order: [[0, 'desc']],
+                ajax: function (data, callback, settings) {
+                    sendRequest("GET", "/admin/list-plugins", function (data) {
+                        callback({ data: data });
+                    });
+                }
+            });
+        }
+
+        $(document).ready(function () {
+            initTable();
+        });
+
+
+    </script>
+</body>
+
+</html>

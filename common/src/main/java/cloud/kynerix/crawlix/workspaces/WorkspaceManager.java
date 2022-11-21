@@ -29,6 +29,7 @@ public class WorkspaceManager {
     }
 
     public Workspace getWorkspaceByKey(String key) {
+        if( key == null ) return null;
         return infinispanSchema.getWorkspacesCache().get(key);
     }
 
@@ -50,8 +51,5 @@ public class WorkspaceManager {
     public void save(Workspace workspace) {
         infinispanSchema.getWorkspacesCache().put(workspace.getKey(), workspace);
         LOGGER.info("Updated " + workspace);
-    }
-
-    public void init() {
     }
 }

@@ -7,10 +7,10 @@ import java.util.Date;
 public class Plugin {
 
     public final static String STATUS_ENABLED = "ENABLED";
-    public final static String TEST_ONLY = "TEST-ONLY";
     public final static String STATUS_DISABLED = "DISABLED";
 
     private String key;
+    private String workspace;
     private String status;
     private String defaultURL;
     private String script;
@@ -30,52 +30,57 @@ public class Plugin {
         return key;
     }
 
-    @ProtoField(number = 2, defaultValue = STATUS_ENABLED)
+    @ProtoField(number = 2)
+    public String getWorkspace() {
+        return workspace;
+    }
+
+    @ProtoField(number = 3, defaultValue = STATUS_ENABLED)
     public String getStatus() {
         return status;
     }
 
-    @ProtoField(number = 3)
+    @ProtoField(number = 4)
     public String getDefaultURL() {
         return defaultURL;
     }
 
-    @ProtoField(number = 4)
+    @ProtoField(number = 5)
     public String getScript() {
         return script;
     }
 
-    @ProtoField(number = 5, defaultValue = "1280")
+    @ProtoField(number = 6, defaultValue = "1280")
     public int getBrowserWidth() {
         return browserWidth;
     }
 
-    @ProtoField(number = 6, defaultValue = "800")
+    @ProtoField(number = 7, defaultValue = "800")
     public int getBrowserHeight() {
         return browserHeight;
     }
 
-    @ProtoField(number = 7, defaultValue = "1000")
+    @ProtoField(number = 8, defaultValue = "1000")
     public int getLoadPauseMs() {
         return loadPauseMs;
     }
 
-    @ProtoField(number = 8, defaultValue = "3600")
+    @ProtoField(number = 9, defaultValue = "3600")
     public int getWatchFrequencySeconds() {
         return watchFrequencySeconds;
     }
 
-    @ProtoField(number = 9)
+    @ProtoField(number = 10)
     public Date getLastUpdate() {
         return lastUpdate;
     }
 
-    @ProtoField(number = 10)
+    @ProtoField(number = 11)
     public String getScriptURL() {
         return scriptURL;
     }
 
-    @ProtoField(number = 11)
+    @ProtoField(number = 12)
     public String getContextScript() {
         return contextScript;
     }
@@ -128,6 +133,10 @@ public class Plugin {
         this.contextScript = contextScript;
     }
 
+    public void setWorkspace(String workspace) {
+        this.workspace = workspace;
+    }
+
     public boolean isValid() {
         return getKey() != null &&
                 getKey().chars().allMatch((c) -> Character.isLetterOrDigit(c) || c == '-' || c == '_') &&
@@ -138,6 +147,7 @@ public class Plugin {
     public String toString() {
         return "Plugin{" +
                 "key='" + key + '\'' +
+                ", workspace='" + workspace + '\'' +
                 ", status='" + status + '\'' +
                 ", defaultURL='" + defaultURL + '\'' +
                 ", script='" + script + '\'' +

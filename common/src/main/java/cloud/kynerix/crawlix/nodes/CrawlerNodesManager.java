@@ -11,6 +11,7 @@ import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -38,12 +39,12 @@ public class CrawlerNodesManager {
     }
 
     public List<WorkerNode> getAllNodes() {
-        return infinispanSchema.getNodesCache().values().stream().collect(Collectors.toList());
+        return new ArrayList<>(infinispanSchema.getNodesCache().values());
     }
 
     public List<WorkerNode> getAllActiveNodes() {
         return infinispanSchema.getNodesCache().values().stream()
-                .filter(n -> n.isActive())
+                .filter(WorkerNode::isActive)
                 .collect(Collectors.toList());
     }
 

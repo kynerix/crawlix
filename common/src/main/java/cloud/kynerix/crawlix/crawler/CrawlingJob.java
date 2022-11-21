@@ -38,7 +38,7 @@ public class CrawlingJob {
         return id;
     }
 
-    @ProtoField(number = 2, required = false)
+    @ProtoField(number = 2)
     @ProtoDoc("@Field(index = Index.YES, store = Store.NO)")
     public String getStatus() {
         return status;

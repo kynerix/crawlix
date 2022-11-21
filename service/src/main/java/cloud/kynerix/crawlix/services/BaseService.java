@@ -16,7 +16,7 @@ import java.util.Map;
 
 public abstract class BaseService {
 
-    Logger LOGGER = LoggerFactory.getLogger(this.getClass().getName());
+    final Logger LOGGER = LoggerFactory.getLogger(this.getClass().getName());
 
     @Inject
     PluginsManager pluginsManager;

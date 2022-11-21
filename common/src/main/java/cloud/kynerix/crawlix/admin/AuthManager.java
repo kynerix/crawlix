@@ -28,6 +28,10 @@ public class AuthManager {
         return authHeader != null && authHeader.equals(adminToken);
     }
 
+    public boolean canAccessWorkspace(String authHeader, Workspace workspace) {
+        return workspace != null && (isAdmin(authHeader) || workspace.getTokens().contains(authHeader));
+    }
+
     public void changeAdminToken(String newToken) {
         if (newToken == null || newToken.isBlank()) {
             infinispanSchema.getGlobalSettingsCache().remove(ADMIN_TOKEN_KEY);
@@ -54,5 +58,4 @@ public class AuthManager {
         }
         return null;
     }
-
 }

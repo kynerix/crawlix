@@ -67,7 +67,7 @@ public class GlobalInitializer {
         }
     }
 
-    public void onInit(@Observes StartupEvent ev) throws Exception {
+    public void onInit(@Observes StartupEvent ev) {
         infinispanSchema.initGlobalSchema();
         initWorkspaces();
         initAdminToken();

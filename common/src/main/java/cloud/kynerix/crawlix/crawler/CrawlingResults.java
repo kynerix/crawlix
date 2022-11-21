@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class CrawlingResults {
 
-    private Map<String, Object> parserResults = new HashMap<>();
+    private final Map<String, Object> parserResults = new HashMap<>();
 
     private boolean success = false;
     private int httpCode = 0;

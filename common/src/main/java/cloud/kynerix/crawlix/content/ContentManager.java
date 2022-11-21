@@ -42,10 +42,10 @@ public class ContentManager {
         return search(workspace, optionalCacheName, filter, 0, DEFAULT_MAX_RESULTS);
     }
 
-    public List<Content> search(Workspace workspace, String optionalCacheName, String queryFilter, int startOffset, int maxResults) throws Exception {
+    public List<Content> search(Workspace workspace, String optionalCacheName, String queryFilter, int startOffset, int maxResults) {
         RemoteCache<String, Content> cache = infinispanSchema.getContentCache(workspace, optionalCacheName, false);
         if (cache == null) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
 
         String query = "FROM crawlix.Content";

@@ -188,7 +188,7 @@ public class CrawlerNodeManager {
             try {
                 long time = CHECK_INTERVAL_SEC * 1000L + new Random().nextInt(1000);
                 LOGGER.debug("Waiting time before retrying: " + time + "ms");
-                Thread.currentThread().sleep(time);
+                Thread.sleep(time);
             } catch (InterruptedException e) {
             }
 
@@ -198,9 +198,8 @@ public class CrawlerNodeManager {
                 CrawlingJob crawlingJob = null;
 
                 WorkerNode workerNode = getWorkerNode();
-
                 try {
-                    if (getWorkerNode().isActive()) {
+                    if (workerNode.isActive()) {
                         // TX1: Lock job
                         crawlingJob = crawlingJobsManager.tryLockCrawlingJob(
                                 workspace,
@@ -219,8 +218,12 @@ public class CrawlerNodeManager {
                             crawlingJob.setWorkerNode(workerNode.getKey());
                             crawlingJob.setStatus(CrawlingJob.STATUS_RUNNING);
                             crawlingJob.setLastCrawlAttempt(new Date());
+
                             crawlingJobsManager.save(workspace, crawlingJob);
                             LOGGER.debug("Job locked " + crawlingJob);
+
+                            workerNode.setMessage("Running [ " + workspace.getKey() + " : " + plugin.getKey() + " : " + crawlingJob.getId() + " ]");
+                            save(workerNode);
 
                             CrawlingResults results = runCrawlerExecution(workspace, crawlingJob, plugin, true);
                             if (results.getHttpCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -233,11 +236,17 @@ public class CrawlerNodeManager {
 
                             // Update plugin
                             pluginsManager.save(workspace, plugin);
+
+                            // Update node
+                            workerNode.setMessage(null);
+                            save(workerNode);
                         }
                     }
 
                 } catch (Exception e) {
                     LOGGER.error("Error trying to lock crawler in node " + workerNode.getKey(), e);
+                    workerNode.setMessage("Error");
+                    save(workerNode);
                 }
             }
         } while (!stopCrawler);

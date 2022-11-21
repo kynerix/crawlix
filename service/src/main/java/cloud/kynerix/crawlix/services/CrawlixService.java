@@ -16,16 +16,18 @@ import java.util.List;
 public class CrawlixService extends BaseService {
 
     @POST
-    @Path("/install-plugin")
+    @Path("/{workspace}/install-plugin")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response installPlugin(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
-            Plugin plugin) throws Exception {
+            @PathParam("workspace") String paramWorkspace,
+            Plugin plugin) {
 
-        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
-        if (workspace == null) return noAuth();
-
+        Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
+        if (!authManager.canAccessWorkspace(authHeader, workspace)) {
+            return noAuth();
+        }
         if (plugin.isValid()) {
             pluginsManager.save(workspace, plugin);
             pluginsManager.checkScriptURLForUpdate(workspace, plugin);
@@ -37,16 +39,18 @@ public class CrawlixService extends BaseService {
     }
 
     @POST
-    @Path("/install-plugins")
+    @Path("/{workspace}/install-plugins")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response installPlugins(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
+            @PathParam("workspace") String paramWorkspace,
             List<Plugin> pluginList) {
 
-        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
-        if (workspace == null) return noAuth();
-
+        Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
+        if (!authManager.canAccessWorkspace(authHeader, workspace)) {
+            return noAuth();
+        }
         if (pluginList == null || pluginList.isEmpty()) {
             return operationResults(false, "List of plugins must be provided for bulk installation");
         }
@@ -68,17 +72,19 @@ public class CrawlixService extends BaseService {
     }
 
     @POST
-    @Path("/install-script")
+    @Path("/{workspace}/install-script")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
     public Response installScript(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("key") String pluginKey,
+            @PathParam("workspace") String paramWorkspace,
             String script) {
 
-        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
-        if (workspace == null) return noAuth();
-
+        Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
+        if (!authManager.canAccessWorkspace(authHeader, workspace)) {
+            return noAuth();
+        }
         Plugin plugin = pluginsManager.getPlugin(workspace, pluginKey);
         if (plugin == null) {
             return operationResults(false, "Plugin " + pluginKey + " not found");
@@ -91,14 +97,17 @@ public class CrawlixService extends BaseService {
     }
 
     @GET
-    @Path("/get-script")
+    @Path("/{workspace}/get-script")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getScript(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
-            @QueryParam("key") String pluginKey) {
+            @QueryParam("key") String pluginKey,
+            @PathParam("workspace") String paramWorkspace) {
 
-        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
-        if (workspace == null) return noAuth();
+        Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
+        if (!authManager.canAccessWorkspace(authHeader, workspace)) {
+            return noAuth();
+        }
 
         Plugin plugin = pluginsManager.getPlugin(workspace, pluginKey);
         if (plugin == null) {
@@ -109,15 +118,18 @@ public class CrawlixService extends BaseService {
     }
 
     @DELETE
-    @Path("/delete-plugin")
+    @Path("/{workspace}/delete-plugin")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response deletePlugin(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
-            @QueryParam("plugin") String key) {
+            @QueryParam("plugin") String key,
+            @PathParam("workspace") String paramWorkspace) {
 
-        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
-        if (workspace == null) return noAuth();
+        Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
+        if (!authManager.canAccessWorkspace(authHeader, workspace)) {
+            return noAuth();
+        }
 
         pluginsManager.delete(workspace, key);
         crawlingJobsManager.deletePluginJobs(workspace, key);
@@ -126,16 +138,24 @@ public class CrawlixService extends BaseService {
     }
 
     @GET
-    @Path("/list-plugins")
+    @Path("/{workspace}/list-plugins")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response listPlugins(
-            @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader
+            @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
+            @PathParam("workspace") String paramWorkspace
     ) {
-        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
-        if (workspace == null) return noAuth();
+        List<Plugin> plugins;
 
-        List<Plugin> plugins = pluginsManager.getAllPlugins(workspace);
+        if (paramWorkspace == null && authManager.isAdmin(authHeader)) {
+            plugins = pluginsManager.getAllPlugins();
+        } else {
+            Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
+            if (!authManager.canAccessWorkspace(authHeader, workspace)) {
+                return noAuth();
+            }
+            plugins = pluginsManager.getAllPlugins(workspace);
+        }
 
         LOGGER.info("Listed " + plugins.size() + " crawler plugins");
 
@@ -143,16 +163,18 @@ public class CrawlixService extends BaseService {
     }
 
     @GET
-    @Path("/enable-plugin")
+    @Path("/{workspace}/enable-plugin")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response startPlugin(
+    public Response enablePlugin(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
-            @QueryParam("plugin") String crawler
+            @QueryParam("plugin") String crawler,
+            @PathParam("workspace") String paramWorkspace
     ) {
-        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
-        if (workspace == null) return noAuth();
-
+        Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
+        if (!authManager.canAccessWorkspace(authHeader, workspace)) {
+            return noAuth();
+        }
         LOGGER.info("Starting plugin " + crawler);
         Plugin plugin = pluginsManager.getPlugin(workspace, crawler);
         if (plugin != null) {
@@ -165,15 +187,18 @@ public class CrawlixService extends BaseService {
     }
 
     @GET
-    @Path("/disable-plugin")
+    @Path("/{workspace}/disable-plugin")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response stopPlugin(
+    public Response disablePlugin(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
-            @QueryParam("plugin") String crawler) {
-        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
-        if (workspace == null) return noAuth();
+            @QueryParam("plugin") String crawler,
+            @PathParam("workspace") String paramWorkspace) {
 
+        Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
+        if (!authManager.canAccessWorkspace(authHeader, workspace)) {
+            return noAuth();
+        }
         LOGGER.info("Stopping plugin " + crawler);
         Plugin plugin = pluginsManager.getPlugin(workspace, crawler);
         if (plugin != null) {
@@ -186,17 +211,19 @@ public class CrawlixService extends BaseService {
     }
 
     @GET
-    @Path("/execute")
+    @Path("/{workspace}/execute")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response execute(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("plugin") String pluginKey,
-            @QueryParam("store-results") @DefaultValue("false") boolean storeResults) throws Exception {
+            @PathParam("workspace") String paramWorkspace,
+            @QueryParam("store-results") @DefaultValue("false") boolean storeResults) {
 
-        Workspace workspace = authManager.getWorkspaceByAuthHeader(authHeader);
-        if (workspace == null) return noAuth();
-
+        Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
+        if (!authManager.canAccessWorkspace(authHeader, workspace)) {
+            return noAuth();
+        }
         LOGGER.info("Running plugin " + pluginKey + " once");
 
         Plugin plugin = pluginsManager.getPlugin(workspace, pluginKey);
