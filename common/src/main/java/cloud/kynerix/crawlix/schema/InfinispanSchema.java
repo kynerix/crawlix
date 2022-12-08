@@ -127,10 +127,9 @@ public class InfinispanSchema {
         return (RemoteCache<String, Workspace>) this.getCache(InfinispanSchema.CACHE_WORKSPACES);
     }
 
-    public RemoteCache<String, Object> getGlobalSettingsCache() {
-        return (RemoteCache<String, Object>) this.getCache(InfinispanSchema.CACHE_SETTINGS);
+    public RemoteCache<String, String> getGlobalSettingsCache() {
+        return (RemoteCache<String, String>) this.getCache(InfinispanSchema.CACHE_SETTINGS);
     }
-
 
     //
     // PER WORKSPACE CACHES

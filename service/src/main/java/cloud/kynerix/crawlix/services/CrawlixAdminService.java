@@ -13,6 +13,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Path("/admin")
@@ -22,6 +23,27 @@ public class CrawlixAdminService extends BaseService {
     @Inject
     CrawlerNodesManager crawlerWorkerNodesManager;
 
+    @POST
+    @Path("/auth")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response authenticateAdmin(
+            Map<String, String> loginParams
+    ) {
+        LOGGER.info("Authenticating admin user");
+
+        String user = loginParams.get("user");
+        String password = loginParams.get("password");
+
+        String adminToken = authManager.authAdminUser(user, password);
+        if (adminToken == null) {
+            LOGGER.error("Invalid admin authentication from");
+            return operationResults(false, "Invalid credentials");
+        } else {
+            return operationResults(true, "Login successful", adminToken);
+        }
+    }
+
     @GET
     @Path("/list-nodes")
     @Produces(MediaType.APPLICATION_JSON)
@@ -29,7 +51,7 @@ public class CrawlixAdminService extends BaseService {
     public Response listNodes(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader
     ) {
-        if (!authManager.isAdmin(authHeader)) {
+        if (!authManager.isAdminToken(authHeader)) {
             return noAuth();
         }
         LOGGER.info("Retrieving all node status");
@@ -45,7 +67,7 @@ public class CrawlixAdminService extends BaseService {
     public Response listWorkspaces(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader
     ) {
-        if (!authManager.isAdmin(authHeader)) {
+        if (!authManager.isAdminToken(authHeader)) {
             return noAuth();
         }
         LOGGER.info("Retrieving all workspaces");
@@ -63,7 +85,7 @@ public class CrawlixAdminService extends BaseService {
             @QueryParam("workspace") String workspaceKey,
             @QueryParam("plugin") String plugin
     ) {
-        if (!authManager.isAdmin(authHeader)) {
+        if (!authManager.isAdminToken(authHeader)) {
             return noAuth();
         }
 
@@ -91,7 +113,7 @@ public class CrawlixAdminService extends BaseService {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("workspace") String paramWorkspace
     ) {
-        if (!authManager.isAdmin(authHeader)) {
+        if (!authManager.isAdminToken(authHeader)) {
             return noAuth();
         }
 
@@ -118,7 +140,7 @@ public class CrawlixAdminService extends BaseService {
             @QueryParam("key") String key,
             @QueryParam("name") String name
     ) {
-        if (!authManager.isAdmin(authHeader)) {
+        if (!authManager.isAdminToken(authHeader)) {
             return noAuth();
         }
 
@@ -141,7 +163,7 @@ public class CrawlixAdminService extends BaseService {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("key") String key
     ) {
-        if (!authManager.isAdmin(authHeader)) {
+        if (!authManager.isAdminToken(authHeader)) {
             return noAuth();
         }
 
@@ -161,7 +183,7 @@ public class CrawlixAdminService extends BaseService {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("token") String token
     ) {
-        if (!authManager.isAdmin(authHeader)) {
+        if (!authManager.isAdminToken(authHeader)) {
             return noAuth();
         }
 
@@ -188,7 +210,7 @@ public class CrawlixAdminService extends BaseService {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("workspace") String workspaceKey
     ) {
-        if (!authManager.isAdmin(authHeader)) {
+        if (!authManager.isAdminToken(authHeader)) {
             return noAuth();
         }
 
@@ -217,7 +239,7 @@ public class CrawlixAdminService extends BaseService {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("node") String node
     ) {
-        if (!authManager.isAdmin(authHeader)) {
+        if (!authManager.isAdminToken(authHeader)) {
             return noAuth();
         }
 
@@ -238,7 +260,7 @@ public class CrawlixAdminService extends BaseService {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("node") String node
     ) {
-        if (!authManager.isAdmin(authHeader)) {
+        if (!authManager.isAdminToken(authHeader)) {
             return noAuth();
         }
 

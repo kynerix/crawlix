@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+import java.util.Optional;
 
 @ApplicationScoped
 public class GlobalInitializer {
@@ -26,10 +27,16 @@ public class GlobalInitializer {
     String DEFAULT_WORKSPACE_KEY;
 
     @ConfigProperty(name = "crawlix.init.workspaces.default.token")
-    String DEFAULT_WORKSPACE_TOKEN;
+    Optional<String> DEFAULT_WORKSPACE_TOKEN;
 
     @ConfigProperty(name = "crawlix.init.admin.token")
-    String INIT_ADMIN_TOKEN;
+    Optional<String> INIT_ADMIN_TOKEN;
+
+    @ConfigProperty(name = "crawlix.init.admin.user")
+    Optional<String> INIT_ADMIN_USER;
+
+    @ConfigProperty(name = "crawlix.init.admin.password")
+    Optional<String> INIT_ADMIN_PASSWORD;
 
     @Inject
     InfinispanSchema infinispanSchema;
@@ -44,11 +51,13 @@ public class GlobalInitializer {
 
     void initWorkspaces() {
         if (CREATE_DEFAULT_WORKSPACE) {
-            boolean generateWorkspaceToken = DEFAULT_WORKSPACE_TOKEN == null || DEFAULT_WORKSPACE_TOKEN.isBlank() || DEFAULT_WORKSPACE_TOKEN.contains("RANDOM");
+            boolean generateWorkspaceToken = DEFAULT_WORKSPACE_TOKEN.isEmpty()
+                    || DEFAULT_WORKSPACE_TOKEN.get().isBlank()
+                    || DEFAULT_WORKSPACE_TOKEN.get().contains("RANDOM");
             LOGGER.warn("Creating default workspace: " + DEFAULT_WORKSPACE_KEY);
             Workspace workspace = workspaceManager.create(DEFAULT_WORKSPACE_KEY, DEFAULT_WORKSPACE_NAME, generateWorkspaceToken);
             if (!generateWorkspaceToken) {
-                workspace.addToken(DEFAULT_WORKSPACE_TOKEN);
+                workspace.addToken(DEFAULT_WORKSPACE_TOKEN.get());
             }
             workspaceManager.save(workspace);
         } else {
@@ -56,13 +65,25 @@ public class GlobalInitializer {
         }
     }
 
+    void initAdminUser() {
+        if (!authManager.isAdminUserDefined()) {
+            if (INIT_ADMIN_USER.isPresent() && INIT_ADMIN_PASSWORD.isPresent()) {
+                LOGGER.info("Setting admin user and password to default values");
+                authManager.changeAdminUser(INIT_ADMIN_USER.get(), INIT_ADMIN_PASSWORD.get());
+            } else {
+                LOGGER.info("No admin user is created");
+            }
+        }
+    }
+
     void initAdminToken() {
         if (!authManager.isAdminTokenDefined()) {
-            if (INIT_ADMIN_TOKEN != null) {
+            if (INIT_ADMIN_TOKEN.isPresent()) {
                 LOGGER.info("Setting admin token to value provided");
-                authManager.changeAdminToken(INIT_ADMIN_TOKEN);
+                authManager.changeAdminToken(INIT_ADMIN_TOKEN.get());
             } else {
                 LOGGER.info("Generating random admin token");
+                authManager.changeAdminToken(authManager.generateRandomAccessToken());
             }
         }
     }
@@ -70,6 +91,7 @@ public class GlobalInitializer {
     public void onInit(@Observes StartupEvent ev) {
         infinispanSchema.initGlobalSchema();
         initWorkspaces();
+        initAdminUser();
         initAdminToken();
 
         for (Workspace workspace : workspaceManager.getWorkspaces()) {

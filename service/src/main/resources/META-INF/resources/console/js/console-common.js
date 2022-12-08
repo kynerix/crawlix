@@ -1,14 +1,83 @@
 "use strict";
 
-var dataSet = [];
-var adminToken = '00-DEFAULT-ADMIN-TOKEN-00';
+const TOKEN_KEY_STORAGE = "admintoken";
+const USER_KEY_STORAGE  = "username";
 
-function refreshTable() {
-    $("#data-table").DataTable().ajax.reload();
+var _dataSet = [];
+var _adminToken = null;
+var _userName = null;
+
+/* ----------------------------------------------------------------------------------------------------------------------------------------------- */
+// Authentication
+/* ----------------------------------------------------------------------------------------------------------------------------------------------- */
+function login(user, password) {
+    sendRequest("POST", "/admin/auth",
+        function (data) {
+            if (data.success === false) {
+                operationError(data.message);
+            } else {
+                _updateAdminToken(data.result);
+                _updateUserName(user);
+                _afterLoginSuccessful();
+            }
+        },
+        // Service parameters
+        {
+            user: user,
+            password: password
+        }
+    );
+}
+
+function logout() {
+    _updateAdminToken(null);
+    _updateUserName(null);
+    _showLoginPage();
+}
+
+function _updateAdminToken(newToken) {
+    _adminToken = newToken;
+    if (newToken != null) {
+        sessionStorage.setItem(TOKEN_KEY_STORAGE, newToken);
+    } else {
+        sessionStorage.removeItem(TOKEN_KEY_STORAGE);
+    }
+}
+
+function _updateUserName(newUserName) {
+    if (newUserName != null) {
+        sessionStorage.setItem(USER_KEY_STORAGE, newUserName);
+        $("#username").text(newUserName);
+    } else {
+        sessionStorage.removeItem(USER_KEY_STORAGE);
+    }
+}
+
+function _showLoginPage() {
+    document.location = "/console/login.html";
+}
+
+function checkAuthentication() {
+    _adminToken = sessionStorage.getItem(TOKEN_KEY_STORAGE);
+    _userName = sessionStorage.getItem(USER_KEY_STORAGE);
+
+    if( _adminToken == null || _userName == null ) {
+        logout();
+        //console.log(_adminToken);
+        //console.log(_userName);
+        return false;
+    } else {
+        $("#username").text(_userName);
+        return true;
+    }
+}
+
+function _afterLoginSuccessful() {
+    document.location = "/console/plugins.html";
 }
 
 /* ----------------------------------------------------------------------------------------------------------------------------------------------- */
-// Actions handling
+// Operation results
 /* ----------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function operationResult(data) {
@@ -37,8 +106,26 @@ function renderDate(dateStr) {
 }
 
 /* ----------------------------------------------------------------------------------------------------------------------------------------------- */
-// Dropdown menus handling
+// Data table
 /* ----------------------------------------------------------------------------------------------------------------------------------------------- */
+
+function refreshTable() {
+    $("#data-table").DataTable().ajax.reload();
+}
+
+/* ----------------------------------------------------------------------------------------------------------------------------------------------- */
+// Dropdown menus
+/* ----------------------------------------------------------------------------------------------------------------------------------------------- */
+function toogle(elementId) {
+       let e = document.getElementById(elementId);
+       if( e == null ) return;
+       if (e.style.visibility == "hidden") {
+               e.style.visibility = "visible";
+           } else {
+               e.style.visibility = "hidden";
+           }
+}
+
 function toogleMenu(clickButton) {
     if (clickButton == null) return;
 
@@ -51,7 +138,6 @@ function toogleMenu(clickButton) {
     } else {
         menu.style.visibility = "hidden";
     }
-
 }
 
 function hideDropdownMenus() {
@@ -74,31 +160,45 @@ function renderMenu(menuOptions) {
 }
 
 /* ----------------------------------------------------------------------------------------------------------------------------------------------- */
+// Send request
+/* ----------------------------------------------------------------------------------------------------------------------------------------------- */
 
-function sendRequest(method, url, callback) {
+function sendRequest(method, url, callback, jsonData = "") {
     $.ajax({
         beforeSend: function (request) {
-            request.setRequestHeader("Authorization", adminToken);
+            if (_adminToken) {
+                request.setRequestHeader("Authorization", _adminToken);
+            }
         },
+        contentType: "application/json",
         method: method,
+        data: JSON.stringify(jsonData),
         dataType: "json",
         url: url,
         success: function (data) {
-            console.log("- Request: " + url);
-            console.log("- Response");
-            console.log(data);
-            console.log("");
+            //console.log("- Request: " + url);
+            //console.log("- Response");
+            //console.log(data);
+            //console.log("");
             callback(data);
         },
         error: function (request, textStatus, error) {
-            operationError(textStatus + " " + error);
+            if (request.status == 403) {
+                // Forbidden
+                console.log("[Request FORBIDDEN] - Forcing authentication");
+                logout();
+                //operationError("Error: " + error);
+            } else {
+                console.log("[Request error] " + error);
+                operationError("Error: " + error);
+            }
         }
     });
 }
 
-
 /* ----------------------------------------------------------------------------------------------------------------------------------------------- */
-/* Admin API calls                                                                                                                                 */
+// API calls
+/* ----------------------------------------------------------------------------------------------------------------------------------------------- */
 
 function startNode(node, callback = null) {
     sendRequest("PUT", "/admin/start-node?node=" + node,
@@ -126,4 +226,3 @@ function deleteWorkspace(workspace, callback = nullworkspace) {
         function (data) { operationResult(data); if (callback) callback(data); }
     );
 }
-

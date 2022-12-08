@@ -147,7 +147,7 @@ public class CrawlixService extends BaseService {
     ) {
         List<Plugin> plugins;
 
-        if (paramWorkspace == null && authManager.isAdmin(authHeader)) {
+        if (paramWorkspace == null && authManager.isAdminToken(authHeader)) {
             plugins = pluginsManager.getAllPlugins();
         } else {
             Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
