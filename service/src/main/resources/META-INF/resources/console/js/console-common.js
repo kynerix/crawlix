@@ -1,7 +1,7 @@
 "use strict";
 
 const TOKEN_KEY_STORAGE = "admintoken";
-const USER_KEY_STORAGE  = "username";
+const USER_KEY_STORAGE = "username";
 
 var _dataSet = [];
 var _adminToken = null;
@@ -61,7 +61,7 @@ function checkAuthentication() {
     _adminToken = sessionStorage.getItem(TOKEN_KEY_STORAGE);
     _userName = sessionStorage.getItem(USER_KEY_STORAGE);
 
-    if( _adminToken == null || _userName == null ) {
+    if (_adminToken == null || _userName == null) {
         logout();
         //console.log(_adminToken);
         //console.log(_userName);
@@ -117,13 +117,13 @@ function refreshTable() {
 // Dropdown menus
 /* ----------------------------------------------------------------------------------------------------------------------------------------------- */
 function toogle(elementId) {
-       let e = document.getElementById(elementId);
-       if( e == null ) return;
-       if (e.style.visibility == "hidden") {
-               e.style.visibility = "visible";
-           } else {
-               e.style.visibility = "hidden";
-           }
+    let e = document.getElementById(elementId);
+    if (e == null) return;
+    if (e.style.visibility == "hidden") {
+        e.style.visibility = "visible";
+    } else {
+        e.style.visibility = "hidden";
+    }
 }
 
 function toogleMenu(clickButton) {
@@ -159,6 +159,20 @@ function renderMenu(menuOptions) {
     return menuHtml;
 }
 
+function renderIcon(data, readyStatus, errorStatus = [], warnStatus = []) {
+    if (data == null) return "";
+    
+    if (readyStatus.includes(data)) {
+        return "<i class='fas fa-check-circle pf-u-success-color-100' aria-hidden='true'></i> ";
+    } else if (errorStatus.includes(data)) {
+        return "<i class='fas fa-exclamation-circle pf-u-danger-color-100' aria-hidden='true'></i> ";
+    } else if (warnStatus.includes(data)) {
+        return "<i class='fas fa-exclamation-triangle pf-u-warning-color-100' aria-hidden='true'></i> ";
+    }
+
+    return "";
+}
+
 /* ----------------------------------------------------------------------------------------------------------------------------------------------- */
 // Send request
 /* ----------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -190,7 +204,7 @@ function sendRequest(method, url, callback, jsonData = "") {
                 //operationError("Error: " + error);
             } else {
                 console.log("[Request error] " + error);
-                operationError("Error: " + error);
+                operationError("Error: " + request.status + " " + error);
             }
         }
     });

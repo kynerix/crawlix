@@ -166,7 +166,11 @@
             $("#data-table").DataTable({
                 columns: [
                     { data: "key" },
-                    { data: "status" },
+                    {
+                        render: function (data, type, rowData, meta) {
+                            return renderIcon(rowData.status, ["READY"], ["STOPPED"]) + rowData.status;
+                        }
+                    },
                     { data: "message", "defaultContent": "-" },
                     { data: "publicURI" },
                     {
