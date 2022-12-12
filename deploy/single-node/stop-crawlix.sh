@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-set -e
+set -o errexit
+set -o pipefail
+
+if [[ "${TRACE-0}" == "1" ]]; then
+    set -o xtrace
+fi
 
 # First optional argument is the configuration script
 if [ -z "$1" ]

@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-set -e
+set -o errexit
+set -o pipefail
+
+if [[ "${TRACE-0}" == "1" ]]; then
+    set -o xtrace
+fi
 
 # Function to wait for container availability
 wait_for_container() {
@@ -53,10 +58,12 @@ podman rm -i -f crawlix-controller
 podman run -d --name crawlix-controller --network=host \
       -e QUARKUS_INFINISPAN_CLIENT_SERVER_LIST="127.0.0.1:$INFINISPAN_PORT" \
       -e QUARKUS_HTTP_PORT="$CONTROLLER_PORT" \
-      -e QUARKUS_INFINISPAN_CLIENT_AUTH_USERNAME=$INFINISPAN_USER \
-      -e QUARKUS_INFINISPAN_CLIENT_AUTH_PASSWORD=$INFINISPAN_PASS \
+      -e QUARKUS_INFINISPAN_CLIENT_AUTH_USERNAME="$INFINISPAN_USER" \
+      -e QUARKUS_INFINISPAN_CLIENT_AUTH_PASSWORD="$INFINISPAN_PASS" \
       -e CRAWLIX_INIT_WORKSPACES_CREATE_DEFAULT="true" \
       -e CRAWLIX_INIT_ADMIN_TOKEN="$ADMIN_TOKEN" \
+      -e CRAWLIX_INIT_ADMIN_USER="$ADMIN_USER" \
+      -e CRAWLIX_INIT_ADMIN_PASSWORD="$ADMIN_PASS" \
       kynerix/crawlix-controller
 
 wait_for_container "127.0.0.1" $CONTROLLER_PORT
@@ -69,8 +76,8 @@ podman rm -i -f crawlix-service
 podman run -d --name crawlix-service --network=host \
       -e QUARKUS_INFINISPAN_CLIENT_SERVER_LIST="127.0.0.1:$INFINISPAN_PORT" \
       -e QUARKUS_HTTP_PORT="$SERVICE_PORT" \
-      -e QUARKUS_INFINISPAN_CLIENT_AUTH_USERNAME=$INFINISPAN_USER \
-      -e QUARKUS_INFINISPAN_CLIENT_AUTH_PASSWORD=$INFINISPAN_PASS \
+      -e QUARKUS_INFINISPAN_CLIENT_AUTH_USERNAME="$INFINISPAN_USER" \
+      -e QUARKUS_INFINISPAN_CLIENT_AUTH_PASSWORD="$INFINISPAN_PASS" \
       kynerix/crawlix-service
 
 wait_for_container 127.0.0.1 $SERVICE_PORT
@@ -88,8 +95,8 @@ for i in `seq 1 ${NUM_CRAWLERS}`;
         --memory 1gb \
         -e QUARKUS_INFINISPAN_CLIENT_SERVER_LIST="127.0.0.1:$INFINISPAN_PORT" \
         -e QUARKUS_HTTP_PORT="$SERVICE_PORT" \
-        -e QUARKUS_INFINISPAN_CLIENT_AUTH_USERNAME=$INFINISPAN_USER \
-        -e QUARKUS_INFINISPAN_CLIENT_AUTH_PASSWORD=$INFINISPAN_PASS \
+        -e QUARKUS_INFINISPAN_CLIENT_AUTH_USERNAME="$INFINISPAN_USER" \
+        -e QUARKUS_INFINISPAN_CLIENT_AUTH_PASSWORD="$INFINISPAN_PASS" \
         -e CRAWLER_NODE_URI="http://127.0.0.1:$PORT" \
         -e CRAWLER_NODE_KEY="crawler${i}" \
         -e CRAWLER_AUTOSTART="true" \
@@ -106,10 +113,20 @@ echo ""
 echo "-----------------------------------------------------------------------------------------------------------------------------------------------------"
 podman ps
 echo "-----------------------------------------------------------------------------------------------------------------------------------------------------"
-echo "CrawliX service is available on http://127.0.0.1:$SERVICE_PORT"
-echo "Admin auth token is: $ADMIN_TOKEN"
+echo "- Service    : http://127.0.0.1:$SERVICE_PORT"
+echo "- Console    : http://127.0.0.1:$SERVICE_PORT/console/login.html"
+echo "- Infinispan : http://127.0.0.1:$INFINISPAN_PORT"
+echo ""
+echo "- Infinispan user:  $INFINISPAN_USER"
+echo "- Infinispan pass:  $INFINISPAN_PASS"
+echo ""
+echo "- Admin auth token is: $ADMIN_TOKEN"
+echo "- Admin user: $ADMIN_USER"
+echo "- Admin pass: $ADMIN_PASS"
 
-echo "Status of crawlers:"
-echo ""
-curl -s -X GET "http://127.0.0.1:$SERVICE_PORT/admin/list-nodes" --header "Authorization: $ADMIN_TOKEN" | jq
-echo ""
+echo "-----------------------------------------------------------------------------------------------------------------------------------------------------"
+
+#echo "Status of crawlers:"
+#echo ""
+#curl -s -X GET "http://127.0.0.1:$SERVICE_PORT/admin/list-nodes" --header "Authorization: $ADMIN_TOKEN" | jq
+#echo ""
