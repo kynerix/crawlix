@@ -230,7 +230,6 @@ public class CrawlixAdminService extends BaseService {
 
         return operationResults(true, "New token '" + token + "' for workspace '" + workspace.getKey() + "' has been generated.");
     }
-
     @PUT
     @Path("/start-node")
     @Produces(MediaType.APPLICATION_JSON)

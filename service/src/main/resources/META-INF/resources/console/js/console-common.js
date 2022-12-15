@@ -133,11 +133,10 @@ function toogleMenu(clickButton) {
 
     if (menu == null) return;
 
-    if (menu.style.visibility == "hidden") {
-        menu.style.visibility = "visible";
-    } else {
-        menu.style.visibility = "hidden";
-    }
+    let visibility = menu.style.visibility == "hidden" ? "visible" : "hidden";
+
+    menu.style.visibility = visibility;
+    menu.querySelectorAll(".pf-c-divider").forEach( e=> {e.style.visibility=visibility;})
 }
 
 function hideDropdownMenus() {
@@ -151,7 +150,11 @@ function renderMenu(menuOptions) {
         '<ul class="pf-c-dropdown__menu" aria-labelledby="dropdown-kebab-expanded-button" style="visibility:hidden">';
 
     for (let option of menuOptions) {
-        menuHtml += '<li><a class="pf-c-dropdown__menu-item" href="#" onClick="javascript: hideDropdownMenus(); ' + option.action + '">' + option.title + '</a></li>';
+        if( option.separator ) {
+            menuHtml += "<li class='pf-c-divider' style='visibility:hidden'></li>";
+        } else {
+            menuHtml += '<li><a class="pf-c-dropdown__menu-item" href="#" onClick="javascript: hideDropdownMenus(); ' + option.action + '">' + option.title + '</a></li>';
+        }
     }
 
     menuHtml += '</ul></div>';
@@ -235,8 +238,20 @@ function generateToken(workspace, callback = null) {
     );
 }
 
-function deleteWorkspace(workspace, callback = nullworkspace) {
+function deleteWorkspace(workspace, callback = null) {
     sendRequest("DELETE", "/admin/delete-workspace?key=" + workspace,
         function (data) { operationResult(data); if (callback) callback(data); }
+    );
+}
+
+function enablePlugin(workspace, plugin, callback = null) {
+    sendRequest("PUT", "/crawlix/" + workspace + "/enable-plugin?plugin=" + plugin,
+            function (data) { operationResult(data); if (callback) callback(data); }
+    );
+}
+
+function disablePlugin(workspace, plugin, callback = null) {
+    sendRequest("PUT", "/crawlix/" + workspace + "/disable-plugin?plugin=" + plugin,
+            function (data) { operationResult(data); if (callback) callback(data); }
     );
 }

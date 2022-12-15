@@ -162,7 +162,7 @@ public class CrawlixService extends BaseService {
         return Response.ok(plugins).build();
     }
 
-    @GET
+    @PUT
     @Path("/{workspace}/enable-plugin")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
@@ -171,22 +171,10 @@ public class CrawlixService extends BaseService {
             @QueryParam("plugin") String crawler,
             @PathParam("workspace") String paramWorkspace
     ) {
-        Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
-        if (!authManager.canAccessWorkspace(authHeader, workspace)) {
-            return noAuth();
-        }
-        LOGGER.info("Starting plugin " + crawler);
-        Plugin plugin = pluginsManager.getPlugin(workspace, crawler);
-        if (plugin != null) {
-            plugin.setStatus(Plugin.STATUS_ENABLED);
-            pluginsManager.save(workspace, plugin);
-            return operationResults(true, "Plugin " + plugin + " is ENABLED");
-        } else {
-            return operationResults(false, "Plugin " + plugin + " not found");
-        }
+        return changePluginStatus(authHeader, crawler, paramWorkspace, Plugin.STATUS_ENABLED);
     }
 
-    @GET
+    @PUT
     @Path("/{workspace}/disable-plugin")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
@@ -194,17 +182,20 @@ public class CrawlixService extends BaseService {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("plugin") String crawler,
             @PathParam("workspace") String paramWorkspace) {
+        return changePluginStatus(authHeader, crawler, paramWorkspace, Plugin.STATUS_DISABLED);
+    }
 
+    private Response changePluginStatus(String authHeader, String crawler, String paramWorkspace, String status) {
         Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
         if (!authManager.canAccessWorkspace(authHeader, workspace)) {
             return noAuth();
         }
-        LOGGER.info("Stopping plugin " + crawler);
+        LOGGER.info("Starting plugin " + crawler);
         Plugin plugin = pluginsManager.getPlugin(workspace, crawler);
         if (plugin != null) {
-            plugin.setStatus(Plugin.STATUS_DISABLED);
+            plugin.setStatus(status);
             pluginsManager.save(workspace, plugin);
-            return operationResults(true, "Plugin " + plugin + " is DISABLED");
+            return operationResults(true, "Plugin " + plugin + " status set to " + status);
         } else {
             return operationResults(false, "Plugin " + plugin + " not found");
         }

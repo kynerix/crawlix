@@ -27,8 +27,8 @@ public class PluginsManager {
     @Inject
     WorkspaceManager workspaceManager;
 
-    public Plugin getPlugin(Workspace workspace, String nodeKey) {
-        return infinispanSchema.getPluginsCache(workspace).get(nodeKey);
+    public Plugin getPlugin(Workspace workspace, String pluginKey) {
+        return infinispanSchema.getPluginsCache(workspace).get(pluginKey);
     }
 
     public void save(Workspace workspace, Plugin plugin) {

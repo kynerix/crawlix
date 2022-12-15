@@ -190,10 +190,13 @@
                             return renderMenu(
                                 [
                                     { title: "View", action: "viewPlugin('" + data.key + "', refreshTable)" },
-                                    { title: "Enable", action: "enablePlugin('" + data.key + "', refreshTable)" },
-                                    { title: "Disable", action: "disablePlugin('" + data.key + "', refreshTable)" },
-                                    { title: "Test", action: "testPlugin('" + data.key + "', refreshTable)" },
+                                    { separator: true },
+                                    { title: "Enable", action: "enablePlugin('"+data.workspace+"', '" + data.key + "', refreshTable)" },
+                                    { title: "Disable", action: "disablePlugin('"+data.workspace+"', '" + data.key + "', refreshTable)" },
+                                    { separator: true },
+                                    { title: "Run Test", action: "testPlugin('" + data.key + "', refreshTable)" },
                                     { title: "Execute", action: "executePlugin('" + data.key + "', refreshTable)" },
+                                    { separator: true },
                                     { title: "Delete", action: "deletePlugin('" + data.key + "', refreshTable)" },
                                 ]);
                         }
