@@ -214,6 +214,8 @@ public class CrawlerNodeManager {
                         Plugin plugin = pluginsManager.getPlugin(workspace, crawlingJob.getPlugin());
                         if (plugin == null) {
                             LOGGER.warn("Plugin is null for job " + crawlingJob);
+                        } else if (!plugin.isActive()) {
+                            LOGGER.warn("Plugin " + plugin.getKey() + " is inactive for job " + crawlingJob);
                         } else {
                             crawlingJob.setWorkerNode(workerNode.getKey());
                             crawlingJob.setStatus(CrawlingJob.STATUS_RUNNING);
@@ -242,7 +244,6 @@ public class CrawlerNodeManager {
                             save(workerNode);
                         }
                     }
-
                 } catch (Exception e) {
                     LOGGER.error("Error trying to lock crawler in node " + workerNode.getKey(), e);
                     workerNode.setMessage("Error");
