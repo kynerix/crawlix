@@ -39,6 +39,7 @@ public class InfinispanSchema {
     private static final String CACHE_WORKSPACES = "CXA_WORKSPACES";
     private static final String CACHE_NODES = "CXA_NODES";
     private static final String CACHE_SETTINGS = "CXA_SETTINGS";
+    private static final String CACHE_TOKENS = "CXA_TOKENS";
     private static final String COUNTER_ID_JOBS = "CXA_ID_JOBS";
     private static final String COUNTER_ID_CONTENT = "CXA_ID_CONTENT";
 
@@ -131,6 +132,10 @@ public class InfinispanSchema {
         return (RemoteCache<String, String>) this.getCache(InfinispanSchema.CACHE_SETTINGS);
     }
 
+    public RemoteCache<String, String> getTokensCache() {
+        return (RemoteCache<String, String>) this.getCache(InfinispanSchema.CACHE_TOKENS);
+    }
+
     //
     // PER WORKSPACE CACHES
     //
@@ -195,6 +200,7 @@ public class InfinispanSchema {
         initCache(CACHE_NODES, null, 100, -1);
         initCache(CACHE_WORKSPACES, null, 100, -1);
         initCache(CACHE_SETTINGS, null, 100, -1);
+        initCache(CACHE_TOKENS, null, 100, -1);
         initCounter(COUNTER_ID_JOBS);
         initCounter(COUNTER_ID_CONTENT);
     }
