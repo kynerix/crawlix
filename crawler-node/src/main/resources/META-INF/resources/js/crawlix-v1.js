@@ -104,13 +104,15 @@ class CrawliX {
 
         this.log("End of parsing");
         this.log("-----------------------------------------------------------------------------------");
-        this.log("** Contents parsed : " + this._contentFound.length);
-        this._contentFound.forEach(c => this.log(" - " + JSON.stringify(c)));
+
+        this.log("Discovered URLs : " + this._urlsFound.length);
+        this._urlsFound.forEach(c => this.log( " - " + c.url + " [" + c.title + "] : " + c.action));
         this.log("");
 
-        this.log("** Discovered URLs : " + this._urlsFound.length);
-        this._urlsFound.forEach(c => this.log(" - " + JSON.stringify(c)));
-        this.log("");
+        this.log("-----------------------------------------------------------------------------------");
+        this.log("Contents parsed : " + this._contentFound.length);
+        //this._contentFound.forEach(c => this.log(" - " + JSON.stringify(c)));
+        //this.log("");
 
         this.log("** SUCCESS: " + this._success);
         this.log("-----------------------------------------------------------------------------------");

@@ -164,6 +164,51 @@
         </main>
     </div>
 
+    <!----------------------------------------------------------------------------------------------------------------->
+
+    <div class="pf-c-backdrop" id="pluginResultsModal" style="visibility:hidden">
+        <div class="pf-l-bullseye">
+            <div
+                    class="pf-c-modal-box pf-m-lg"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="modal-scroll-title"
+                    aria-describedby="modal-scroll-description"
+            >
+                <button
+                        class="pf-c-button pf-m-plain"
+                        type="button"
+                        aria-label="Close dialog"
+                        onclick="hide('pluginResultsModal');"
+                >
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+                <header class="pf-c-modal-box__header">
+                    <h1
+                            class="pf-c-modal-box__title"
+                            id="modal-scroll-title"
+                    >Plugin execution results</h1>
+                    <div
+                            class="pf-c-modal-box__description"
+                            id="modal-scroll-description"
+                    ></div>
+                </header>
+                <div class="pf-c-modal-box__body" tabindex="0">
+                    <div class="pf-c-code-block__content">
+                        <pre class="pf-c-code-block__pre"><code class="pf-c-code-block__code" id="pluginJSON"></code></pre>
+                    </div>
+                </div>
+                <footer class="pf-c-modal-box__footer">
+                    <button class="pf-c-button pf-m-primary" type="button"
+                        onclick="hide('pluginResultsModal');"
+                    >Close</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!----------------------------------------------------------------------------------------------------------------->
+
     <script>
 
         function initTable() {
@@ -191,11 +236,11 @@
                                 [
                                     { title: "View", action: "viewPlugin('" + data.key + "', refreshTable)" },
                                     { separator: true },
-                                    { title: "Enable", action: "enablePlugin('"+data.workspace+"', '" + data.key + "', refreshTable)" },
-                                    { title: "Disable", action: "disablePlugin('"+data.workspace+"', '" + data.key + "', refreshTable)" },
+                                    { title: "Enable",   action: "enablePlugin('"+data.workspace+"', '" + data.key + "', refreshTable)" },
+                                    { title: "Disable",  action: "disablePlugin('"+data.workspace+"', '" + data.key + "', refreshTable)" },
                                     { separator: true },
-                                    { title: "Run Test", action: "testPlugin('" + data.key + "', refreshTable)" },
-                                    { title: "Execute", action: "executePlugin('" + data.key + "', refreshTable)" },
+                                    { title: "Run Test", action: "testPlugin('"+data.workspace+"', '" + data.key + "', showPluginResults)" },
+                                    { title: "Execute",  action: "executePlugin('"+data.workspace+"', '" + data.key + "', showPluginResults)" },
                                     { separator: true },
                                     { title: "Delete", action: "deletePlugin('" + data.key + "', refreshTable)" },
                                 ]);
@@ -217,6 +262,12 @@
             }
         });
 
+        function showPluginResults(data) {
+            update('pluginJSON', JSON.stringify(data,null, 4));
+            show('pluginResultsModal');
+            console.log(data);
+            refreshTable();
+        }
 
     </script>
 </body>

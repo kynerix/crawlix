@@ -63,8 +63,6 @@ function checkAuthentication() {
 
     if (_adminToken == null || _userName == null) {
         logout();
-        //console.log(_adminToken);
-        //console.log(_userName);
         return false;
     } else {
         $("#username").text(_userName);
@@ -105,6 +103,34 @@ function renderDate(dateStr) {
     return d.toLocaleString();
 }
 
+function hide(elementId) {
+    let e = document.getElementById(elementId);
+    if (e == null) return;
+    e.style.visibility = "hidden";
+}
+
+function show(elementId) {
+    let e = document.getElementById(elementId);
+    if (e == null) return;
+    e.style.visibility = "visible";
+}
+
+function update(elementId, innerContent)  {
+    let e = document.getElementById(elementId);
+    if (e == null) return;
+    e.innerHTML = innerContent;
+}
+
+function toogle(elementId) {
+    let e = document.getElementById(elementId);
+    if (e == null) return;
+    if (e.style.visibility == "hidden") {
+        e.style.visibility = "visible";
+    } else {
+        e.style.visibility = "hidden";
+    }
+}
+
 /* ----------------------------------------------------------------------------------------------------------------------------------------------- */
 // Data table
 /* ----------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -116,15 +142,6 @@ function refreshTable() {
 /* ----------------------------------------------------------------------------------------------------------------------------------------------- */
 // Dropdown menus
 /* ----------------------------------------------------------------------------------------------------------------------------------------------- */
-function toogle(elementId) {
-    let e = document.getElementById(elementId);
-    if (e == null) return;
-    if (e.style.visibility == "hidden") {
-        e.style.visibility = "visible";
-    } else {
-        e.style.visibility = "hidden";
-    }
-}
 
 function toogleMenu(clickButton) {
     if (clickButton == null) return;
@@ -252,6 +269,18 @@ function enablePlugin(workspace, plugin, callback = null) {
 
 function disablePlugin(workspace, plugin, callback = null) {
     sendRequest("PUT", "/crawlix/" + workspace + "/disable-plugin?plugin=" + plugin,
+            function (data) { operationResult(data); if (callback) callback(data); }
+    );
+}
+
+function testPlugin(workspace, plugin, callback = null) {
+    sendRequest("PUT", "/crawlix/" + workspace + "/execute?plugin=" + plugin,
+            function (data) { operationResult(data); if (callback) callback(data); }
+    );
+}
+
+function executePlugin(workspace, plugin, callback = null) {
+    sendRequest("PUT", "/crawlix/" + workspace + "/execute?plugin=" + plugin + "&store-results=true",
             function (data) { operationResult(data); if (callback) callback(data); }
     );
 }

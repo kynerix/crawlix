@@ -201,7 +201,7 @@ public class CrawlixService extends BaseService {
         }
     }
 
-    @GET
+    @PUT
     @Path("/{workspace}/execute")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
