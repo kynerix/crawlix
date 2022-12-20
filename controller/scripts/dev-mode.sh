@@ -5,9 +5,9 @@ cd common/scripts
 popd
 
 pushd ..
-echo "*** Starting CONTROLLER dev mode in PORT 8077 and DEBUG PORT 5003 ***"
-./mvnw -Dquarkus.http.port=8077 \
-       -Ddebug=5003 \
+echo "*** Starting CONTROLLER dev mode in PORT 8078 and DEBUG PORT 5004 ***"
+./mvnw -Dquarkus.http.port=8078 \
+       -Ddebug=5004 \
        -Dcrawlix.init.workspaces.create.default=true \
        -Dcrawlix.init.admin.token="00-DEFAULT-ADMIN-TOKEN-00" \
        -Dcrawlix.init.admin.user="admin" \
