@@ -77,7 +77,7 @@ public class CrawlixService extends BaseService {
     @Produces(MediaType.APPLICATION_JSON)
     public Response installScript(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
-            @QueryParam("key") String pluginKey,
+            @QueryParam("plugin") String pluginKey,
             @PathParam("workspace") String paramWorkspace,
             String script) {
 
@@ -98,10 +98,10 @@ public class CrawlixService extends BaseService {
 
     @GET
     @Path("/{workspace}/get-script")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response getScript(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
-            @QueryParam("key") String pluginKey,
+            @QueryParam("plugin") String pluginKey,
             @PathParam("workspace") String paramWorkspace) {
 
         Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
@@ -111,11 +111,33 @@ public class CrawlixService extends BaseService {
 
         Plugin plugin = pluginsManager.getPlugin(workspace, pluginKey);
         if (plugin == null) {
-            return Response.serverError().build();
+            return operationResults(false, "Invalid plugin " + pluginKey);
         }
 
         return Response.accepted(plugin.getScript()).build();
     }
+
+    @GET
+    @Path("/{workspace}/get-plugin")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getPlugin(
+            @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
+            @QueryParam("plugin") String pluginKey,
+            @PathParam("workspace") String paramWorkspace) {
+
+        Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
+        if (!authManager.canAccessWorkspace(authHeader, workspace)) {
+            return noAuth();
+        }
+
+        Plugin plugin = pluginsManager.getPlugin(workspace, pluginKey);
+        if (plugin == null) {
+            return operationResults(false, "Invalid plugin " + pluginKey);
+        }
+
+        return Response.accepted(plugin).build();
+    }
+
 
     @DELETE
     @Path("/{workspace}/delete-plugin")

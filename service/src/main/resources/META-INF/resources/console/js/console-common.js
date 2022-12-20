@@ -197,7 +197,7 @@ function renderIcon(data, readyStatus, errorStatus = [], warnStatus = []) {
 // Send request
 /* ----------------------------------------------------------------------------------------------------------------------------------------------- */
 
-function sendRequest(method, url, callback, jsonData = "") {
+function sendRequest(method, url, callback, jsonData = null) {
     $.ajax({
         beforeSend: function (request) {
             if (_adminToken) {
@@ -210,11 +210,11 @@ function sendRequest(method, url, callback, jsonData = "") {
         dataType: "json",
         url: url,
         success: function (data) {
-            //console.log("- Request: " + url);
-            //console.log("- Response");
-            //console.log(data);
-            //console.log("");
-            callback(data);
+            if( data.success == false ) {
+                operationError("Error " + request.message);    
+            } else {
+                callback(data);
+            }
         },
         error: function (request, textStatus, error) {
             if (request.status == 403) {
@@ -282,5 +282,11 @@ function testPlugin(workspace, plugin, callback = null) {
 function executePlugin(workspace, plugin, callback = null) {
     sendRequest("PUT", "/crawlix/" + workspace + "/execute?plugin=" + plugin + "&store-results=true",
             function (data) { operationResult(data); if (callback) callback(data); }
+    );
+}
+
+function loadPlugin(workspace, plugin, callback = null) {
+    sendRequest("GET", "/crawlix/" + workspace + "/get-plugin?plugin=" + plugin,
+            function (data) { if (callback) callback(data); }
     );
 }
