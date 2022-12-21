@@ -61,5 +61,5 @@ curl -s -X GET -H "Content-Type: application/json" http://localhost:8077/crawler
 
 - Check the Swagger UI : http://localhost:8079/q/swagger-ui/
 
-### **Step 5**: Start developing with Quarkus
+### **Step 6**: Start developing with Quarkus
 

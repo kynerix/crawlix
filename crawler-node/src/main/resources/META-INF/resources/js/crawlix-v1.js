@@ -1,4 +1,4 @@
-/* CrawliX library for common parsing operations in crawler plugins.
+/* CrawliX library for creating crawler plugins.
 
    To test your plugin in your local browser, open the Javascript console and paste the following JS snippet:
 
@@ -111,8 +111,8 @@ class CrawliX {
 
         this.log("-----------------------------------------------------------------------------------");
         this.log("Contents parsed : " + this._contentFound.length);
-        //this._contentFound.forEach(c => this.log(" - " + JSON.stringify(c)));
-        //this.log("");
+        this._contentFound.forEach(c => console.log(c));
+        this.log("");
 
         this.log("** SUCCESS: " + this._success);
         this.log("-----------------------------------------------------------------------------------");
@@ -455,18 +455,37 @@ class CrawliX {
         return this;
     }
 
-    removeTags(cssSelector) {
+    removeTags(cssSelector, filterFunction = null) {
         let totalRemoved = 0;
         document.querySelectorAll(cssSelector).forEach(
             node => {
-                node.remove();
-                totalRemoved++;
+                if( filterFunction == null || filterFunction(node) ) {
+                    node.remove();
+                    totalRemoved++;
+                }
             }
         );
 
         this.log("removeTags - " + cssSelector + " : removed " + totalRemoved);
         return this;
     }
+
+    testSelector( selector, filterFunction = null ) {
+        let totalHits = 0;
+        document.querySelectorAll(selector).forEach(
+            c=>{
+                if( filterFunction == null || filterFunction(c) ) {
+                    console.log("----------------------------------------------------------");
+                    console.log(c);
+                    console.log("");
+                    console.log("INNER TEXT:");
+                    console.log(c.innerText);
+                    totalHits++;
+                }
+                });
+       console.log("");
+       console.log("Total hits: " + totalHits);
+     }
 }
 
 // ------------------------------------------------------------------------------------------------------------------------
@@ -556,7 +575,7 @@ class CrawliXLinks {
 
 var crawlix = new CrawliX();
 
-crawlix.log('JS has been injected...');
+crawlix.log('CrawliX JS has been injected...');
 
 // End of Crawlix JS injection
 // ---------------------------------------------------------------------------------------------------------------------

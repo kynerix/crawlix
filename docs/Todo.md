@@ -6,3 +6,6 @@
 ### Crawling
 * Handle relative URLs in links
 * Screenshots and image resources
+
+### Console
+* Refactor console to a proper JS framework
