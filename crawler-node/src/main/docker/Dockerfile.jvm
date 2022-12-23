@@ -1,17 +1,25 @@
 FROM fedora:35
+#FROM quay.io/centos/centos:stream9
 
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
 
 USER root
 RUN dnf install -y java-11-openjdk
-RUN dnf install -y wget bzip2 psmisc net-tools iproute nmap
+RUN dnf install -y wget bzip2 psmisc net-tools iproute nmap unzip
 RUN dnf install -y firefox
+RUN dnf install -y chromium
 
 # Download and install Gecko Driver
-RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.30.0/geckodriver-v0.30.0-linux64.tar.gz && \
+RUN wget -q https://github.com/mozilla/geckodriver/releases/download/v0.30.0/geckodriver-v0.30.0-linux64.tar.gz && \
     tar xvfz geckodriver-v0.30.0-linux64.tar.gz && \
     mv geckodriver /usr/local/bin/ && \
     rm geckodriver-v0.30.0-linux64.tar.gz
+
+# Download and install Chrome Driver
+RUN wget -q https://chromedriver.storage.googleapis.com/108.0.5359.71/chromedriver_linux64.zip && \
+    unzip chromedriver_linux64.zip && \
+    mv chromedriver /usr/local/bin/ && \
+    rm chromedriver_linux64.zip
 
 USER 185
 WORKDIR "/deployments"

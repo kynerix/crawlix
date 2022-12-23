@@ -13,6 +13,8 @@ import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxDriverLogLevel;
 import org.openqa.selenium.firefox.FirefoxOptions;
@@ -35,20 +37,23 @@ public class SeleniumCrawlerExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SeleniumCrawlerExecutor.class.getName());
 
+    @ConfigProperty(name = "crawler.browser", defaultValue = "chrome")
+    String BROWSER;
+
     @ConfigProperty(name = "crawler.gecko.driver")
     String GECKO_DRIVER_PATH;
 
-    @ConfigProperty(name = "crawler.firefox.args")
-    String FIREFOX_ARGS;
+    @ConfigProperty(name = "crawler.chrome.driver")
+    String CHROME_DRIVER_PATH;
+
+    @ConfigProperty(name = "crawler.browser.headless", defaultValue = "true")
+    boolean BROWSER_HEADLESS;
 
     @ConfigProperty(name = "crawler.selenium.timeout.sec")
     long TIMEOUT_SECS;
 
     @ConfigProperty(name = "crawler.selenium.wait.sec")
     long WAIT_SECS;
-
-    @ConfigProperty(name = "crawler.browser.close", defaultValue = "true")
-    boolean CLOSE_BROWSER;
 
     @ConfigProperty(name = "crawler.javascript.lib.path")
     String JAVASCRIPT_LIBRARY;
@@ -69,28 +74,46 @@ public class SeleniumCrawlerExecutor {
 
     WebDriver buildLocalDriver() {
 
-        System.setProperty(GeckoDriverService.GECKO_DRIVER_EXE_PROPERTY, GECKO_DRIVER_PATH);
-        System.setProperty(FirefoxDriver.SystemProperty.BROWSER_LOGFILE, "/dev/null");
+        WebDriver driver = null;
 
-        LOGGER.info("Building local driver with " + GECKO_DRIVER_PATH + " and arguments " + FIREFOX_ARGS);
+        if (BROWSER.equalsIgnoreCase("firefox")) {
+            LOGGER.info("Building local driver with " + GECKO_DRIVER_PATH);
 
-        FirefoxOptions firefoxOptions = new FirefoxOptions();
+            System.setProperty(GeckoDriverService.GECKO_DRIVER_EXE_PROPERTY, GECKO_DRIVER_PATH);
+            System.setProperty(FirefoxDriver.SystemProperty.BROWSER_LOGFILE, "/dev/null");
 
-        firefoxOptions.addArguments(FIREFOX_ARGS);
-        firefoxOptions.setLogLevel(FirefoxDriverLogLevel.DEBUG);
-        firefoxOptions.addPreference("browser.tabs.remote.autostart", false);
-        firefoxOptions.addPreference("security.sandbox.content.level", 5);
+            FirefoxOptions firefoxOptions = new FirefoxOptions();
 
-        WebDriver driver = new FirefoxDriver(firefoxOptions);
+            firefoxOptions.setHeadless(BROWSER_HEADLESS);
+            firefoxOptions.setLogLevel(FirefoxDriverLogLevel.DEBUG);
+            firefoxOptions.addPreference("browser.tabs.remote.autostart", false);
+            firefoxOptions.addPreference("security.sandbox.content.level", 5);
 
-        LOGGER.info("Local driver created");
+            driver = new FirefoxDriver(firefoxOptions);
+
+            LOGGER.info("Local FIREFOX driver created");
+        } else if (BROWSER.equalsIgnoreCase("chrome")) {
+            LOGGER.info("Building local driver with " + CHROME_DRIVER_PATH + " and arguments ");
+
+            System.setProperty("webdriver.chrome.driver", CHROME_DRIVER_PATH);
+
+            ChromeOptions chromeOptions = new ChromeOptions();
+            chromeOptions.setHeadless(BROWSER_HEADLESS);
+            chromeOptions.addArguments("version", "disable-web-security");
+
+            driver = new ChromeDriver(chromeOptions);
+
+            LOGGER.info("Local CHROME driver created");
+        } else {
+            LOGGER.error("UNKNOWN browser: " + BROWSER);
+        }
 
         return driver;
     }
 
     void releaseDriver(WebDriver driver) {
         try {
-            if (driver != null && CLOSE_BROWSER) {
+            if (driver != null && BROWSER_HEADLESS) {
                 LOGGER.info("Releasing local driver");
                 driver.quit();
                 LOGGER.info("Local driver released");
@@ -228,7 +251,7 @@ public class SeleniumCrawlerExecutor {
                     if (action != null) {
                         job.setAction(action.toUpperCase());
                     }
-                    if( text != null ) {
+                    if (text != null) {
                         job.setContext("[" + text + "]");
                     }
                     if (persist) {
