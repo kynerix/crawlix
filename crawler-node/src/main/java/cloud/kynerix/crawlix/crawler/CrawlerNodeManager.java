@@ -171,6 +171,7 @@ public class CrawlerNodeManager {
         return crawlerExecutor.getJavascriptLibraryContent();
     }
 
+
     public void onInit(@Observes StartupEvent ev) {
         init();
     }

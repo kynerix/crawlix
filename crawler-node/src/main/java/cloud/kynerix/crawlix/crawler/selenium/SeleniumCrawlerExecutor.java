@@ -53,7 +53,7 @@ public class SeleniumCrawlerExecutor {
     @ConfigProperty(name = "crawler.javascript.lib.path")
     String JAVASCRIPT_LIBRARY;
 
-    @ConfigProperty(name = "crawler.javascript.lib.url")
+    @ConfigProperty(name = "crawler.javascript.lib.uri")
     String JAVASCRIPT_URL;
 
     @Inject
