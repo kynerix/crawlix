@@ -1,6 +1,8 @@
 /* CrawliX library for creating crawler plugins.
 
-   To test your plugin in your local browser, open the Javascript console and paste the following JS snippet:
+   To test your plugin in your local browser, open the Javascript console and paste the following JS snippet.
+  
+   See examples of plugins at https://github.com/kynerix/crawlix-lib
 
 (function(d, script) {
 script = d.createElement('script');
@@ -21,7 +23,6 @@ class CrawliX {
 
     _getResults() {
         return JSON.stringify({
-            _logs: this._logs,
             _contentFound: this._contentFound,
             _urlsFound: this._urlsFound,
             _success: this._success,
@@ -42,14 +43,11 @@ class CrawliX {
         this._optionExtractProperty = 'innerText';      // Extract plain text
         this._optionSeparator = ', ';                   // Separator when joining multiple strings into one
 
-        this._currentField = 'body';                    // Active content field
-        this._currentContent = [{}];                    // Active list of contents parsed
+        this._currentContent = [{}];                    // Active list of contents
         this._logs = [];                                // Plugin logs for later analylis
-
-        this._links = new CrawliXLinks(this);
     }
 
-    requiredParam(param) {
+    requiredParam(param, defaultValue = null) {
         try {
             if (typeof eval(param) !== 'undefined') {
                 this.log("PARAMETER: '" + param + "' = '" + eval(param) + "'");
@@ -59,13 +57,23 @@ class CrawliX {
             // Do nothing
         }
 
-        this.fail();
-        this.log("REQUIRED parameter '" + param + "' is not defined.");
-        return this.end();
+        if (defaultValue != null) {
+            this.log("Setting default value to parameter " + param + " = " + defaultValue);
+            window[param] = defaultValue;
+            return this;
+        } else {
+            this.fail();
+            this.log("REQUIRED parameter '" + param + "' is not defined.");
+            return this.end();
+        }
     }
 
-    links() {
-        return this._links;
+    linksParser() {
+        return new CrawlixLinksParser(this);
+    }
+
+    blocksParser(cssSelector, filterFunction) {
+        return new CrawlixBlocksParser(this, cssSelector, filterFunction);
     }
 
     linkCount() {
@@ -105,8 +113,8 @@ class CrawliX {
         this.log("End of parsing");
         this.log("-----------------------------------------------------------------------------------");
 
-        this.log("Discovered URLs : " + this._urlsFound.length);
-        this._urlsFound.forEach(c => this.log( " - " + c.url + " [" + c.title + "] : " + c.action));
+        this.log("Discovered Links : " + this._urlsFound.length);
+        this._urlsFound.forEach(link => console.log(link));
         this.log("");
 
         this.log("-----------------------------------------------------------------------------------");
@@ -130,99 +138,17 @@ class CrawliX {
         return this;
     }
 
-    // ------------------------------------------------------------------------------------------------------------------------
-
-    field(activeField) {
-        this._currentField = activeField;
-        return this;
-    }
-
-    body() {
-        return this.field("body");
-    }
-
-    title() {
-        return this.field("title");
-    }
-
-    key() {
-        return this.field("key");
-    }
-
-    summary() {
-        return this.field("summary");
-    }
-
-    author() {
-        return this.field("author");
-    }
-
-    url() {
-        return this.field("url");
-    }
-
-    type() {
-        return this.field("type");
-    }
-
-    currentContent(index = 0) {
-        while (index >= this._currentContent.length) {
-            this._currentContent.push({});
-        }
-
-        return this._currentContent[index];
-    }
-
-    currentValue(index = 0) {
-        return this.currentContent(index)[this._currentField];
-    }
 
     // ------------------------------------------------------------------------------------------------------------------------
 
-    /*
-     * Single content extraction
-     */
-    parseAttributeValue(cssSelector, attribute) {
-        return this.parse(cssSelector, attribute);
-    }
 
-    parseFirst(cssSelector) {
-        return this.parse(cssSelector, null, false);
-    }
-
-    parseMultiple(cssSelector) {
-        return this.parse(cssSelector, null, true);
-    }
-
-    parse(cssSelector, attribute = null, selectMultipleEntities = false) {
-        let selectedEntities = Array.from(document.querySelectorAll(cssSelector));
-        if (!selectMultipleEntities && selectedEntities.length > 1) {
-            selectedEntities = [selectedEntities[0]];
-        }
-        let contentHit = selectedEntities.map(
-            // Extract either attribute value or tag content
-            c => { return attribute != null ? c.getAttribute(attribute) : c[this._optionExtractProperty] }
-        );
-
-        for (let i = 0; i < contentHit.length; i++) {
-            this.setValue(contentHit[i], i);
-        }
-
-        this.log("parse - field: " + this._currentField + " cssSelector: " + cssSelector + " retrieving: " +
-            (attribute != null ? ("attribute " + attribute) : this._optionExtractProperty)
-        );
-        this.log("parse - hits: " + contentHit.length);
-
+    setValue(field, value, index = 0) {
+        this._currentContent[index][field] = value;
         return this;
     }
 
-    setValue(value, index = 0) {
-        this.currentContent(index)[this._currentField] = value;
-        return this;
-    }
-
-    setValues(value) {
-        this._currentContent.forEach(c => { c[this._currentField] = value; })
+    setValues(field, value) {
+        this._currentContent.forEach(c => { c[field] = value; })
         return this;
     }
 
@@ -242,25 +168,38 @@ class CrawliX {
     }
 
     // ------------------------------------------------------------------------------------------------------------------------
+    // Current content manipulation
+    // ------------------------------------------------------------------------------------------------------------------------
 
-    applyToContents(functionToApply) {
+    removeIfEmpty(field) {
+        return this.removeIf(field, f => {
+            return !f;
+        })
+    }
+
+    removeIf(field, removeFieldFunction) {
+        this._currentContent = this._currentContent.filter(
+            c => { return !removeFieldFunction(c[field]) }
+        );
+        return this;
+    }
+
+    applyToField(field, functionToApply) {
         for (let i = 0; i < this._currentContent.length; i++) {
-            let value = this.currentValue(i);
-            if (value != null) {
-                let newValue = functionToApply(value);
-                if (newValue != null) {
-                    this.setValue(newValue, i);
-                }
+            let value = this._currentContent[i][field];
+            if (value) {
+                this.setValue(field, functionToApply(value), i);
             }
         }
 
         return this;
     }
 
-    cutBetween(left, right) {
-        return this.applyToContents(
+    cutBetween(field, left, right) {
+        return this.applyToField(
+            field,
             value => {
-                let index1 = left == null ? 0 : value.indexOf(left);
+                let index1 = left == null ? 0 : (value.indexOf(left) + left.length);
                 let index2 = right == null ? value.length - 1 : value.indexOf(right);
 
                 if (index1 != -1 && index2 != -1) {
@@ -272,46 +211,51 @@ class CrawliX {
         );
     }
 
-    trim() {
-        return this.applyToContents(
+    trim(field) {
+        return this.applyToField(
+            field,
             value => {
                 return value.trim();
             }
         );
     }
 
-    appendLeft(leftStr) {
-        return this.applyToContents(
+    appendLeft(field, leftStr) {
+        return this.applyToField(
+            field,
             value => {
                 return leftStr + value;
             }
         );
     }
 
-    appendRight(rightStr) {
-        return this.applyToContents(
+    appendRight(field, rightStr) {
+        return this.applyToField(
+            field,
             value => {
                 return value + rightStr;
             }
         );
     }
 
-    replaceAll(regexp, replaceValue) {
+    replaceAll(field, regexp, replaceValue) {
         if (regexp == null) return this;
 
         if (replaceValue == null) replaceValue = "";
 
-        return this.applyToContents(
+        return this.applyToField(
+            field,
             value => {
                 return value.replaceAll(regexp, replaceValue);
             }
         );
     }
 
-    split(separator, keepValue = null) {
+    split(field, separator, keepValue = null) {
         if (separator == null) return this;
 
-        return this.applyToContents(
+        return this.applyToField(
+            field,
             value => {
                 let values = value.split(separator);
                 if (keepValue != null && keepValue < values.length) {
@@ -324,16 +268,18 @@ class CrawliX {
 
     }
 
-    uppercase() {
-        return this.applyToContents(
+    uppercase(field) {
+        return this.applyToField(
+            field,
             value => {
                 return value.toUpperCase();
             }
         );
     }
 
-    lowercase() {
-        return this.applyToContents(
+    lowercase(field) {
+        return this.applyToField(
+            field,
             value => {
                 return value.toLowerCase();
             }
@@ -341,21 +287,6 @@ class CrawliX {
     }
 
     // ------------------------------------------------------------------------------------------------------------------------
-
-    assertNotEmpty() {
-        this.log("assertNotEmpty");
-        return this.failIf(this.currentValue() == null || this.currentValue().trim().length == 0);
-    }
-
-    assertEquals(value) {
-        this.log("assertEquals :" + value);
-        return this.failIf(value == null && this.currentValue() != null || value !== this.currentValue());
-    }
-
-    assertContains(value) {
-        this.log("assertContains :" + value);
-        return this.failIf(value == null || this.currentValue() == null || this.currentValue().indexOf(value) == -1);
-    }
 
     assertContentCount(n) {
         this.log("assertContentCount = " + n);
@@ -392,47 +323,9 @@ class CrawliX {
         this.log("addContent - #" + this._contentFound.length);
 
         if (this._currentContent.length > 0) {
-            this._contentFound.push(this.currentContent());
+            this._contentFound.push(this._currentContent[0]);
             this._currentContent.shift();
         }
-
-        return this;
-    }
-
-    joinContents(filterFunction = null) {
-        this.log("joinContents - Aggregating " + this._currentContent.length) + " objects into one";
-
-        if (this._currentContent.length < 2) {
-            this.log("joinContents - no multiple contents found. Ignoring.");
-            return this;
-        }
-
-        let joinContent = {};
-
-        let contents = this._currentContent;
-        if (filterFunction != null) {
-            contents = contents.filter(filterFunction);
-        }
-
-        if (contents.length == 0) {
-            this.log("joinContents - Filtered ALL contents. Ignoring.");
-            return this;
-        }
-
-        let keys = Object.keys(contents[0]);
-
-        keys.forEach(k => {
-            // Aggregate all values for all objects properties under k
-            let values = contents
-                .map(v => { return v[k]; })
-                .filter(v => { return v; });   // Remove undefined
-
-            joinContent[k] = values.join(this._getSeparator());
-        });
-
-        this._currentContent = [joinContent];
-
-        this.addContent();
 
         return this;
     }
@@ -455,90 +348,162 @@ class CrawliX {
         return this;
     }
 
-    removeTags(cssSelector, filterFunction = null) {
-        let totalRemoved = 0;
-        document.querySelectorAll(cssSelector).forEach(
-            node => {
-                if( filterFunction == null || filterFunction(node) ) {
-                    node.remove();
-                    totalRemoved++;
-                }
-            }
-        );
+    select(cssSelector, filterFunction = null, startNode = null) {
+        let hits = [];
+        let root = startNode == null ? document : startNode;
 
-        this.log("removeTags - " + cssSelector + " : removed " + totalRemoved);
+        if (cssSelector == null) return hits;
+
+        root.querySelectorAll(cssSelector).forEach(
+            c => {
+                if (filterFunction == null || filterFunction(c)) {
+                    hits.push(c);
+                }
+            });
+        this.log("   · [selector] " + cssSelector + " hits: " + hits.length);
+        return hits;
+    }
+
+    // ------------------------------------------------------------------------------------------------------------------------
+
+    removeTags(cssSelector, filterFunction = null) {
+        let tags = this.select(cssSelector, filterFunction);
+        for (let tag of tags) {
+            tag.remove();
+        }
+
+        this.log("[removeTags] - removed " + tags.length);
+        return this;
+    }
+}
+
+// ------------------------------------------------------------------------------------------------------------------------
+// Parses content per block, typically an article, product or post. 
+
+class CrawlixBlocksParser {
+    constructor(crawlix, cssSelector, filterFunction = null) {
+        this.crawlix = crawlix;
+        this._selectors = {};
+        this._filters = {};
+        this._parseAttr = {};
+        this._blockSelector = cssSelector;
+        this._blockFilter = filterFunction;
+    }
+
+    select(field, cssSelector, parseAttribute = null, filterFunction = null) {
+        this._selectors[field] = cssSelector;
+        this._filters[field] = filterFunction;
+        this._parseAttr[field] = parseAttribute;
+        this.crawlix.log("[Blocks] Parsing " + field + " as " + cssSelector);
         return this;
     }
 
-    testSelector( selector, filterFunction = null ) {
-        let totalHits = 0;
-        document.querySelectorAll(selector).forEach(
-            c=>{
-                if( filterFunction == null || filterFunction(c) ) {
-                    console.log("----------------------------------------------------------");
-                    console.log(c);
-                    console.log("");
-                    console.log("INNER TEXT:");
-                    console.log(c.innerText);
-                    totalHits++;
+    parse() {
+        let blocks = this.crawlix.select(this._blockSelector, this._blockFilter);
+        let contentsFound = 0;
+
+        for (let i = 0; i < blocks.length; i++) {
+            let block = blocks[i];
+            let newContent = {};
+            let fields = Object.keys(this._selectors);
+            this.crawlix.log("----- Block #" + i + " -----");
+
+            for (let field of fields) {
+                let values = this.crawlix.select(
+                    this._selectors[field],
+                    this._filters[field],
+                    block);
+
+                if (values.length > 0) {
+                    let parseAttr = this._parseAttr[field];
+                    let extractedContents = values.map(
+                        // Extract either attribute value or tag content via innerText or others
+                        c => { return parseAttr != null ? c.getAttribute(parseAttr) : c[this.crawlix._optionExtractProperty] }
+                    );
+
+                    // Append all texts into one
+                    newContent[field] = extractedContents.join(this.crawlix._getSeparator());
                 }
-                });
-       console.log("");
-       console.log("Total hits: " + totalHits);
-     }
+            }
+
+            if (Object.keys(newContent).length > 0) {
+                this.crawlix._currentContent.push(newContent);
+                contentsFound++;
+            }
+        }
+
+        this.crawlix.log("[Blocks] Blocks found: " + blocks.length + " contents: " + contentsFound);
+
+        return this.crawlix;
+    }
 }
 
 // ------------------------------------------------------------------------------------------------------------------------
 
-class CrawliXLinks {
+class CrawlixLinksParser {
     constructor(crawlix) {
         this.crawlix = crawlix;
         this._currentURLs = [];      // Current list of links found
     }
 
-    find(cssSelector = "a", plugin = null) {
-        let urls = Array.from(document.querySelectorAll(cssSelector));
+    find(cssSelector = "a", plugin = null, filterFunction = null) {
+        let urls = this.crawlix.select(cssSelector, filterFunction);
 
         let linkObjects = urls.map(link => {
             return {
                 url: link.href,
-                title: link.innerText,
+                title: link.innerText.trim(),
                 plugin: plugin,
                 parent: location.href,
                 action: "parse"
             }
         });
 
-        // Remove duplicates
-        linkObjects.filter((link, index) => {
-            for (let i = index + 1; i < linkObjects.length; i++) {
-                if (linkObjects[i].url === link.url) return false;
-            }
-            return true;
-        });
-
-        this.crawlix.log("findLinks - Found " + linkObjects.length + " links");
+        this.crawlix.log("[link parser] - Found " + linkObjects.length + " links");
 
         this._currentURLs = this._currentURLs.concat(linkObjects);
 
         return this;
     }
 
-    include(hrefInclude) {
-        return this.filter(hrefInclude);
+    include(field, includeStr) {
+        this.crawlix.log("[link parser] including links if field '" + field + "' contains '" + includeStr + "'");
+        return this.filter(field, includeStr);
     }
 
-    exclude(hrefExclude) {
-        return this.filter(null, hrefExclude);
+    exclude(field, excludeStr) {
+        this.crawlix.log("[link parser] excluding links if field '" + field + "' contains '" + excludeStr + "'");
+        return this.filter(field, null, excludeStr);
     }
 
-    filter(hrefInclude = null, hrefExclude = null) {
+    removeIfEmpty(field) {
+        this.crawlix.log("[link parser] removing links if field '" + field + "' is empty");
+        return this.filterByExpr(
+            link => { return link[field]; }
+        );
+    }
+
+    removeDuplicates() {
+        
+        this._currentURLs = this._currentURLs.filter((link, index) => {
+            for (let i = index + 1; i < this._currentURLs.length; i++) {
+                if (this._currentURLs[i].url === link.url) return false;
+            }
+            return true;
+        });
+
+        this.crawlix.log("[link parser] removed duplicates - size: " + this._currentURLs.length);
+
+        return this;
+    }
+
+    filter(field, includeStr = null, excludeStr = null) {
         return this.filterByExpr(
             link => {
-                return (hrefInclude == null || link.url.includes(hrefInclude))
-                    && (hrefExclude == null || !link.url.includes(hrefExclude))
+                return (includeStr == null || link[field].includes(includeStr))
+                    && (excludeStr == null || !link[field].includes(excludeStr))
             }
-        )
+        );
     }
 
     filterByExpr(evalFunction) {
@@ -548,19 +513,19 @@ class CrawliXLinks {
             this._currentURLs = this._currentURLs.filter(evalFunction);
         }
 
-        this.crawlix.log("filterLinksExpr - " + this._currentURLs.length + " links out of " + initialCount);
+        this.crawlix.log("    · [filter by expr] " + this._currentURLs.length + " links out of " + initialCount);
         return this;
     }
 
     check() {
-        return this.action("check");
+        return this._action("check");
     }
 
-    analyze() {
-        return this.action("parse");
+    visit() {
+        return this._action("parse");
     }
 
-    action(linkAction) {
+    _action(linkAction) {
         this._currentURLs.forEach(link => { link.action = linkAction })
         return this;
     }
@@ -575,7 +540,7 @@ class CrawliXLinks {
 
 var crawlix = new CrawliX();
 
-crawlix.log('CrawliX JS has been injected...');
+console.log("*".repeat(80));
+console.log('CrawliX JS has been injected');
+console.log("*".repeat(80));
 
-// End of Crawlix JS injection
-// ---------------------------------------------------------------------------------------------------------------------
