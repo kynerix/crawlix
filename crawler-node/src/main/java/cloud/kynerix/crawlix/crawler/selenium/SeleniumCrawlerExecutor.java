@@ -96,11 +96,12 @@ public class SeleniumCrawlerExecutor {
             LOGGER.info("Building local driver with " + CHROME_DRIVER_PATH + " and arguments ");
 
             System.setProperty("webdriver.chrome.driver", CHROME_DRIVER_PATH);
+            //System.setProperty("webdriver.chrome.logfile", "chromedriver.log");
 
             ChromeOptions chromeOptions = new ChromeOptions();
             chromeOptions.setHeadless(BROWSER_HEADLESS);
             chromeOptions.addArguments("version", "disable-web-security");
-
+            
             driver = new ChromeDriver(chromeOptions);
 
             LOGGER.info("Local CHROME driver created");

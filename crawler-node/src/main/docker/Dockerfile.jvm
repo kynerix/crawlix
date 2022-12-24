@@ -7,7 +7,12 @@ USER root
 RUN dnf install -y java-11-openjdk
 RUN dnf install -y wget bzip2 psmisc net-tools iproute nmap unzip
 RUN dnf install -y firefox
-RUN dnf install -y chromium
+#RUN dnf install -y chromium
+
+RUN dnf -y install fedora-workstation-repositories
+RUN dnf -y install dnf-plugins-core
+RUN dnf config-manager --set-enabled google-chrome
+RUN dnf install -y google-chrome-stable
 
 # Download and install Gecko Driver
 RUN wget -q https://github.com/mozilla/geckodriver/releases/download/v0.30.0/geckodriver-v0.30.0-linux64.tar.gz && \

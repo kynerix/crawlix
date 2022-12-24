@@ -34,7 +34,7 @@ echo "- Loading configuration from: $CONFIG_FILE"
 
 . ${CONFIG_FILE}
 
-if [ -z "$var" ]
+if [ -z "$ADMIN_TOKEN" ]
 then
     echo "- Generate admin token"
     generate_admin_token
