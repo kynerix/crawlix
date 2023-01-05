@@ -8,8 +8,6 @@ import java.util.Map;
 
 public class CrawlingResults {
 
-    private final Map<String, Object> parserResults = new HashMap<>();
-
     private boolean success = false;
     private int httpCode = 0;
 
@@ -22,10 +20,6 @@ public class CrawlingResults {
     private String error;
 
     public CrawlingResults() {
-    }
-
-    public Map<String, Object> getParserResults() {
-        return parserResults;
     }
 
     public boolean isSuccess() {

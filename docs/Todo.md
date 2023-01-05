@@ -6,6 +6,8 @@
 ### Crawling
 * Handle relative URLs in links
 * Screenshots and image resources
+* Support for TOR browser
+* Proxy support
 
 ### Console
 * Refactor console to a proper JS framework

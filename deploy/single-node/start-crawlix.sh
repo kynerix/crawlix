@@ -44,7 +44,7 @@ fi
 
 echo "- Starting Infinispan container..."
 
-podman rm -i -f infinispan
+podman rm -i -f infinispan > /dev/null 2>&1
 
 podman run -d --name infinispan --network=host -e USER=$INFINISPAN_USER -e PASS=$INFINISPAN_PASS quay.io/infinispan/server:latest &
 
@@ -53,7 +53,7 @@ wait_for_container "127.0.0.1" $INFINISPAN_PORT
 echo "- Infinispan is ready in port $INFINISPAN_PORT"
 echo "- Starting Controller..."
 
-podman rm -i -f crawlix-controller
+podman rm -i -f crawlix-controller > /dev/null 2>&1
 
 podman run -d --name crawlix-controller --network=host \
       -e QUARKUS_INFINISPAN_CLIENT_SERVER_LIST="127.0.0.1:$INFINISPAN_PORT" \
@@ -71,7 +71,7 @@ wait_for_container "127.0.0.1" $CONTROLLER_PORT
 echo "- CONTROLLER is ready in $CONTROLLER_PORT"
 echo "- Starting Service container..."
 
-podman rm -i -f crawlix-service
+podman rm -i -f crawlix-service > /dev/null 2>&1
 
 podman run -d --name crawlix-service --network=host \
       -e QUARKUS_INFINISPAN_CLIENT_SERVER_LIST="127.0.0.1:$INFINISPAN_PORT" \
@@ -89,7 +89,7 @@ for i in `seq 1 ${NUM_CRAWLERS}`;
     PORT=$(($CRAWLER_PORT+1-i))
 
     echo "- Starting crawler $i on port $PORT"
-    podman rm -i -f "crawlix-crawler-$i"
+    podman rm -i -f "crawlix-crawler-$i" > /dev/null 2>&1
     podman run -d --name "crawlix-crawler-${i}" --network=host \
         --shm-size 2gb \
         --memory 1gb \

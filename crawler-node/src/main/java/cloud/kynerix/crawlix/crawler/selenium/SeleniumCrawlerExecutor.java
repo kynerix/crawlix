@@ -101,7 +101,8 @@ public class SeleniumCrawlerExecutor {
             ChromeOptions chromeOptions = new ChromeOptions();
             chromeOptions.setHeadless(BROWSER_HEADLESS);
             chromeOptions.addArguments("version", "disable-web-security");
-            
+            //chromeOptions.setBinary("")
+
             driver = new ChromeDriver(chromeOptions);
 
             LOGGER.info("Local CHROME driver created");

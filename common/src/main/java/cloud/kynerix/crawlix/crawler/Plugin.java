@@ -21,6 +21,10 @@ public class Plugin {
     private int browserHeight = 800;
     private int watchFrequencySeconds = 3600;
 
+    private boolean disableJS;
+
+
+
     private Date lastUpdate;
 
     private String contextScript;
@@ -84,6 +88,7 @@ public class Plugin {
     public String getContextScript() {
         return contextScript;
     }
+
 
     public void setKey(String key) {
         this.key = key;
