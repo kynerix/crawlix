@@ -364,6 +364,24 @@ class CrawliX {
         return hits;
     }
 
+    selectIfContains(text, tagSelector, startNode = null) {
+        return this.select(tagSelector, tag => { return tag.innerText.trim().toLowerCase().includes(text.toLowerCase()); }, startNode);
+    }
+
+    click(text, tagSelector = "button", startNode = null ) {
+        let buttons = this.selectIfContains(text, tagSelector, startNode);
+        if( buttons && buttons.length > 0) {
+            this.log("[click] Clicking on ["+text+"]");
+            buttons[0].click();
+        }
+        return this;
+    }
+
+    async sleep(ms) {
+        this.log("Sleep " + ms + "ms");
+        await new Promise(resolve => setTimeout(resolve, ms));
+    }
+      
     // ------------------------------------------------------------------------------------------------------------------------
 
     removeTags(cssSelector, filterFunction = null) {
@@ -484,7 +502,7 @@ class CrawlixLinksParser {
     }
 
     removeDuplicates() {
-        
+
         this._currentURLs = this._currentURLs.filter((link, index) => {
             for (let i = index + 1; i < this._currentURLs.length; i++) {
                 if (this._currentURLs[i].url === link.url) return false;
