@@ -32,6 +32,10 @@ public class CrawlixAdminService extends BaseService {
     ) {
         LOGGER.info("Authenticating admin user");
 
+        if( loginParams == null ) {
+            return operationResults(false, "Invalid request");
+        }
+
         String user = loginParams.get("user");
         String password = loginParams.get("password");
 

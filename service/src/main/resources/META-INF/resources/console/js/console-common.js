@@ -21,6 +21,7 @@ function login(user, password) {
                 _afterLoginSuccessful();
             }
         },
+        true,
         // Service parameters
         {
             user: user,
@@ -97,6 +98,26 @@ function operationError(msg) {
     setTimeout(function () { $("#errorMsg").hide(); }, 5000);
 }
 
+function showSpinner() {
+    show("spinner");
+}
+
+function hideSpinner() {
+    hide("spinner");
+}
+
+function showTabs(activeTab, numberOfTabs, tabsPrefix, contentPrefix) {
+    for (let i = 1; i <= numberOfTabs; i++) {
+        if (i == activeTab) {
+            show(contentPrefix + "_" + i);
+            addClass(tabsPrefix + "_" + i, "pf-m-current");
+        } else {
+            hide(contentPrefix + "_" + i);
+            removeClass(tabsPrefix + "_" + i, "pf-m-current");
+        }
+    }
+}
+
 function renderDate(dateStr) {
     if (dateStr == null) return "-";
     var d = new Date(dateStr.replace("[UTC]", ""));
@@ -107,15 +128,29 @@ function hide(elementId) {
     let e = document.getElementById(elementId);
     if (e == null) return;
     e.style.visibility = "hidden";
+    e.style.display = "none";
 }
 
 function show(elementId) {
     let e = document.getElementById(elementId);
     if (e == null) return;
     e.style.visibility = "visible";
+    e.style.display = "inline";
 }
 
-function update(elementId, innerContent)  {
+function addClass(elementId, newClass) {
+    let e = document.getElementById(elementId);
+    if (e == null) return;
+    e.classList.add(newClass);
+}
+
+function removeClass(elementId, removeClass) {
+    let e = document.getElementById(elementId);
+    if (e == null) return;
+    e.classList.remove(removeClass);
+}
+
+function update(elementId, innerContent) {
     let e = document.getElementById(elementId);
     if (e == null) return;
     e.innerHTML = innerContent;
@@ -153,7 +188,7 @@ function toogleMenu(clickButton) {
     let visibility = menu.style.visibility == "hidden" ? "visible" : "hidden";
 
     menu.style.visibility = visibility;
-    menu.querySelectorAll(".pf-c-divider").forEach( e=> {e.style.visibility=visibility;})
+    menu.querySelectorAll(".pf-c-divider").forEach(e => { e.style.visibility = visibility; })
 }
 
 function hideDropdownMenus() {
@@ -167,7 +202,7 @@ function renderMenu(menuOptions) {
         '<ul class="pf-c-dropdown__menu" aria-labelledby="dropdown-kebab-expanded-button" style="visibility:hidden">';
 
     for (let option of menuOptions) {
-        if( option.separator ) {
+        if (option.separator) {
             menuHtml += "<li class='pf-c-divider' style='visibility:hidden'></li>";
         } else {
             menuHtml += '<li><a class="pf-c-dropdown__menu-item" href="#" onClick="javascript: hideDropdownMenus(); ' + option.action + '">' + option.title + '</a></li>';
@@ -181,7 +216,7 @@ function renderMenu(menuOptions) {
 
 function renderIcon(data, readyStatus, errorStatus = [], warnStatus = []) {
     if (data == null) return "";
-    
+
     if (readyStatus.includes(data)) {
         return "<i class='fas fa-check-circle pf-u-success-color-100' aria-hidden='true'></i> ";
     } else if (errorStatus.includes(data)) {
@@ -197,12 +232,13 @@ function renderIcon(data, readyStatus, errorStatus = [], warnStatus = []) {
 // Send request
 /* ----------------------------------------------------------------------------------------------------------------------------------------------- */
 
-function sendRequest(method, url, callback, jsonData = null) {
+function sendRequest(method, url, callback, checkForSuccessConfirmation = true, jsonData = null) {
     $.ajax({
         beforeSend: function (request) {
             if (_adminToken) {
                 request.setRequestHeader("Authorization", _adminToken);
             }
+            showSpinner();
         },
         contentType: "application/json",
         method: method,
@@ -210,13 +246,17 @@ function sendRequest(method, url, callback, jsonData = null) {
         dataType: "json",
         url: url,
         success: function (data) {
-            if( data.success == false ) {
-                operationError("Error " + request.message);    
+            hideSpinner();
+            if (data.success == false && checkForSuccessConfirmation) {
+                // The request has been successful, but the payload signals an error.
+                // data.message should be reporting the error details.
+                operationError("Error: " + data.message);
             } else {
                 callback(data);
             }
         },
         error: function (request, textStatus, error) {
+            hideSpinner();
             if (request.status == 403) {
                 // Forbidden
                 console.log("[Request FORBIDDEN] - Forcing authentication");
@@ -263,30 +303,33 @@ function deleteWorkspace(workspace, callback = null) {
 
 function enablePlugin(workspace, plugin, callback = null) {
     sendRequest("PUT", "/crawlix/" + workspace + "/enable-plugin?plugin=" + plugin,
-            function (data) { operationResult(data); if (callback) callback(data); }
+        function (data) { operationResult(data); if (callback) callback(data); }
     );
 }
 
 function disablePlugin(workspace, plugin, callback = null) {
     sendRequest("PUT", "/crawlix/" + workspace + "/disable-plugin?plugin=" + plugin,
-            function (data) { operationResult(data); if (callback) callback(data); }
+        function (data) { operationResult(data); if (callback) callback(data); }
     );
 }
 
 function testPlugin(workspace, plugin, callback = null) {
+
     sendRequest("PUT", "/crawlix/" + workspace + "/execute?plugin=" + plugin,
-            function (data) { operationResult(data); if (callback) callback(data); }
+        function (data) { operationResult(data); if (callback) callback(data); },
+        false /* Show results regardless of reported success status */
     );
 }
 
 function executePlugin(workspace, plugin, callback = null) {
     sendRequest("PUT", "/crawlix/" + workspace + "/execute?plugin=" + plugin + "&store-results=true",
-            function (data) { operationResult(data); if (callback) callback(data); }
+        function (data) { operationResult(data); if (callback) callback(data); },
+        false /* Show results regardless of reported success status */
     );
 }
 
 function loadPlugin(workspace, plugin, callback = null) {
     sendRequest("GET", "/crawlix/" + workspace + "/get-plugin?plugin=" + plugin,
-            function (data) { if (callback) callback(data); }
+        function (data) { if (callback) callback(data); }
     );
 }

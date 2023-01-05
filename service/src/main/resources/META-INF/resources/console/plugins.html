@@ -106,11 +106,18 @@
         <!-- SIDEBAR END -->
 
         <main class="pf-c-page__main" tabindex="-1">
-
             <!-- TITLE -->
             <section class="pf-c-page__main-section pf-m-limit-width pf-m-light">
 
                 <div class="pf-c-page__main-body">
+                    <!-- SPINNER -->
+                    <div style="float:right;position:relative;visibility:hidden" id="spinner">
+                        <svg class="pf-c-spinner pf-m-xl" role="progressbar" viewBox="0 0 100 100"
+                            aria-label="Loading...">
+                            <circle class="pf-c-spinner__path" cx="50" cy="50" r="45" fill="none" />
+                        </svg>
+                    </div>
+                    <!-- END of SPINNER -->
 
                     <div class="pf-c-content">
                         <h1>Plugins</h1>
@@ -144,6 +151,7 @@
                         <span id="errorTxt"></span>
                     </p>
                 </div>
+
                 <!-- End of alerts / Errors -->
 
                 <div class="pf-c-card" style="padding: 20px">
@@ -166,6 +174,8 @@
     </div>
 
     <!----------------------------------------------------------------------------------------------------------------->
+    <!-- PLUGIN EXECUTION RESULTS MODAL                                                                              -->
+    <!----------------------------------------------------------------------------------------------------------------->
 
     <div class="pf-c-backdrop" id="pluginResultsModal" style="visibility:hidden">
         <div class="pf-l-bullseye">
@@ -176,14 +186,64 @@
                     <i class="fas fa-times" aria-hidden="true"></i>
                 </button>
                 <header class="pf-c-modal-box__header">
-                    <h1 class="pf-c-modal-box__title" id="modal-scroll-title">Plugin execution results</h1>
+                    <h1 class="pf-c-modal-box__title" id="modal-scroll-title" style="padding-bottom: 10px;"><span class="pf-c-icon pf-m-lg ">
+                        <span class="pf-c-icon__content pf-m-info">
+                          <i class="fas fa-info-circle" aria-hidden="true"></i>
+                        </span>
+                      </span> Plugin execution results</h1>
                     <div class="pf-c-modal-box__description" id="modal-scroll-description"></div>
-                </header>
-                <div class="pf-c-modal-box__body" tabindex="0">
-                    <div class="pf-c-code-block__content">
-                        <pre
-                            class="pf-c-code-block__pre"><code class="pf-c-code-block__code" id="pluginJSON"></code></pre>
+                    <div class="pf-c-tabs" id="pluginExecutionTabs" style="display: none;">
+                        <ul class="pf-c-tabs__list">
+                            <li class="pf-c-tabs__item pf-m-current" id="pluginExecTabs_1">
+                                <button type="button" class="pf-c-tabs__link"
+                                    onclick="showTabs(1, 4, 'pluginExecTabs', 'pluginExecDetails' );">
+                                    <span class="pf-c-tabs__item-text">Summary</span>
+                                </button>
+                            </li>
+                            <li class="pf-c-tabs__item" id="pluginExecTabs_2">
+                                <button type="button" class="pf-c-tabs__link"
+                                    onclick="showTabs(2, 4, 'pluginExecTabs', 'pluginExecDetails' );">
+                                    <span class="pf-c-tabs__item-text">Parsed content</span>
+                                </button>
+                            </li>
+                            <li class="pf-c-tabs__item" id="pluginExecTabs_3">
+                                <button type="button" class="pf-c-tabs__link"
+                                    onclick="showTabs(3, 4, 'pluginExecTabs', 'pluginExecDetails' );">
+                                    <span class="pf-c-tabs__item-text">Parsed links</span>
+                                </button>
+                            </li>
+                            <li class="pf-c-tabs__item" id="pluginExecTabs_4">
+                                <button type="button" class="pf-c-tabs__link"
+                                    onclick="showTabs(4, 4, 'pluginExecTabs', 'pluginExecDetails' );">
+                                    <span class="pf-c-tabs__item-text">Plugin logs</span>
+                                </button>
+                            </li>
+                        </ul>
                     </div>
+                </header>
+
+                <div class="pf-c-modal-box__body" tabindex="0">
+
+                    <div class="pf-c-code-block__content" id="pluginExecDetails_1">
+                        <textarea rows="15" class="pf-c-form-control" aria-invalid="false"
+                            id="pluginExecSummary"></textarea>
+                    </div>
+
+                    <div class="pf-c-code-block__content" id="pluginExecDetails_2">
+                        <textarea rows="15" class="pf-c-form-control" aria-invalid="false"
+                            id="pluginExecContent"></textarea></pre>
+                    </div>
+
+                    <div class="pf-c-code-block__content" id="pluginExecDetails_3">
+                        <textarea rows="15" class="pf-c-form-control" aria-invalid="false"
+                            id="pluginExecJobs"></textarea></pre>
+                    </div>
+
+                    <div class="pf-c-code-block__content" id="pluginExecDetails_4">
+                        <textarea rows="15" class="pf-c-form-control" aria-invalid="false"
+                            id="pluginExecLogs"></textarea></pre>
+                    </div>
+
                 </div>
                 <footer class="pf-c-modal-box__footer">
                     <button class="pf-c-button pf-m-primary" type="button"
@@ -194,35 +254,66 @@
     </div>
 
     <!----------------------------------------------------------------------------------------------------------------->
+    <!-- PLUGIN DETAILS MODAL                                                                                        -->
+    <!----------------------------------------------------------------------------------------------------------------->
 
     <div class="pf-c-backdrop" id="pluginDetailsModal" style="visibility:hidden">
         <div class="pf-l-bullseye">
             <div class="pf-c-modal-box pf-m-lg" role="dialog" aria-modal="true" aria-labelledby="modal-scroll-title"
                 aria-describedby="modal-scroll-description">
                 <button class="pf-c-button pf-m-plain" type="button" aria-label="Close dialog"
-                    onclick="hide('pluginDetailsModal');">
+                    onclick="hide('pluginDetailsTabs'); hide('pluginDetailsModal');">
                     <i class="fas fa-times" aria-hidden="true"></i>
                 </button>
                 <header class="pf-c-modal-box__header">
-                    <h1 class="pf-c-modal-box__title">Plugin details</h1>
+                    <h1 class="pf-c-modal-box__title" style="padding-bottom: 10px;"><span class="pf-c-icon pf-m-lg ">
+                        <span class="pf-c-icon__content pf-m-info">
+                          <i class="fas fa-info-circle" aria-hidden="true"></i>
+                        </span>
+                      </span> Plugin details</h1>
+
                     <div class="pf-c-modal-box__description"></div>
+                    <div class="pf-c-tabs" id="pluginDetailsTabs" style="display: none;">
+                        <ul class="pf-c-tabs__list">
+                            <li class="pf-c-tabs__item pf-m-current" id="pluginTabs_1">
+                                <button type="button" class="pf-c-tabs__link"
+                                    onclick="showTabs(1, 2, 'pluginTabs', 'pluginDetails' );">
+                                    <span class="pf-c-tabs__item-text">Properties</span>
+                                </button>
+                            </li>
+                            <li class="pf-c-tabs__item" id="pluginTabs_2">
+                                <button type="button" class="pf-c-tabs__link" id="default-tabs-containers-link"
+                                    onclick="showTabs(2, 2, 'pluginTabs', 'pluginDetails' );">
+                                    <span class="pf-c-tabs__item-text">Script</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
                 </header>
-                <div class="pf-c-modal-box__body" tabindex="0">
-                    <div class="pf-c-code-block__content">
-                        <pre
-                            class="pf-c-code-block__pre"><code class="pf-c-code-block__code" id="pluginDetails"></code></pre>
+
+                <div class="pf-c-modal-box__body">
+                    <div class="pf-c-code-block__content " id="pluginDetails_1">
+                        <textarea class="pf-c-form-control" aria-invalid="false" id="pluginDetailsBlock"
+                            rows="15"></textarea></pre>
+                    </div>
+
+                    <div class="pf-c-code-block__content" id="pluginDetails_2">
+                        <textarea class="pf-c-form-control" aria-invalid="false" id="pluginScriptBlock"
+                            rows="15"></textarea>
                     </div>
                 </div>
+
                 <footer class="pf-c-modal-box__footer">
                     <button class="pf-c-button pf-m-primary" type="button"
-                        onclick="hide('pluginDetailsModal');">Close</button>
+                        onclick="hide('pluginDetailsTabs'); hide('pluginDetailsModal');">Close</button>
                 </footer>
             </div>
         </div>
     </div>
 
     <!----------------------------------------------------------------------------------------------------------------->
-
+    <!-- TABLE CONFIGURATION                                                                                         -->
+    <!----------------------------------------------------------------------------------------------------------------->
     <script>
 
         function initTable() {
@@ -277,14 +368,30 @@
         });
 
         function showPluginResults(data) {
-            update('pluginJSON', JSON.stringify(data, null, 4));
+            let logs = data.pluginLogs; delete data.pluginLogs;
+            let content = data.content; delete data.content;
+            let jobs = data.crawlingJobs; delete data.crawlingJobs;
+
+            update('pluginExecSummary', JSON.stringify(data, null, 4));
+            update('pluginExecContent', JSON.stringify(content, null, 4));
+            update('pluginExecJobs', JSON.stringify(jobs, null, 4));
+            update('pluginExecLogs', JSON.stringify(logs, null, 4));
+
             show('pluginResultsModal');
+            show('pluginExecutionTabs');
+            showTabs(1, 4, "pluginExecTabs", 'pluginExecDetails');
+
             refreshTable();
         }
 
         function showPluginDetails(data) {
-            update('pluginDetails', JSON.stringify(data, null, 4));
+            let script = data.script;
+            delete data.script;
+            update('pluginDetailsBlock', JSON.stringify(data, null, 4));
+            update('pluginScriptBlock', script);
             show('pluginDetailsModal');
+            show('pluginDetailsTabs');
+            showTabs(1, 2, "pluginTabs", 'pluginDetails');
             refreshTable();
         }
     </script>
