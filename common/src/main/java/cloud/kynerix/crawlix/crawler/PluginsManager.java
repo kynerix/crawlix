@@ -33,6 +33,7 @@ public class PluginsManager {
 
     public void save(Workspace workspace, Plugin plugin) {
         plugin.setWorkspace(workspace.getKey());
+
         infinispanSchema.getPluginsCache(workspace).put(plugin.getKey(), plugin);
     }
 

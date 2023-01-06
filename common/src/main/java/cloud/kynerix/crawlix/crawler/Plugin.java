@@ -1,5 +1,6 @@
 package cloud.kynerix.crawlix.crawler;
 
+import cloud.kynerix.crawlix.utils.WatchFrequencyParser;
 import org.infinispan.protostream.annotations.ProtoField;
 
 import java.util.Date;
@@ -19,11 +20,8 @@ public class Plugin {
     private int loadPauseMs;
     private int browserWidth = 1280;
     private int browserHeight = 800;
-    private int watchFrequencySeconds = 3600;
-
-    private boolean disableJS;
-
-
+    private String watchFrequency;
+    private int watchFrequencySeconds;
 
     private Date lastUpdate;
 
@@ -74,17 +72,22 @@ public class Plugin {
         return watchFrequencySeconds;
     }
 
-    @ProtoField(number = 10)
+    @ProtoField(number = 10, defaultValue = "1d")
+    public String getWatchFrequency() {
+        return watchFrequency;
+    }
+
+    @ProtoField(number = 11)
     public Date getLastUpdate() {
         return lastUpdate;
     }
 
-    @ProtoField(number = 11)
+    @ProtoField(number = 12)
     public String getScriptURL() {
         return scriptURL;
     }
 
-    @ProtoField(number = 12)
+    @ProtoField(number = 13)
     public String getContextScript() {
         return contextScript;
     }
@@ -114,12 +117,17 @@ public class Plugin {
         this.script = script;
     }
 
-    public void setLoadPauseMs(int loadPauseMs) {
-        this.loadPauseMs = loadPauseMs;
-    }
-
     public void setWatchFrequencySeconds(int watchFrequencySeconds) {
         this.watchFrequencySeconds = watchFrequencySeconds;
+    }
+
+    public void setWatchFrequency(String watchFrequency) {
+        this.watchFrequency = watchFrequency;
+    }
+
+
+    public void setLoadPauseMs(int loadPauseMs) {
+        this.loadPauseMs = loadPauseMs;
     }
 
     public void setLastUpdate(Date lastUpdate) {
@@ -143,6 +151,9 @@ public class Plugin {
     }
 
     public boolean isValid() {
+        setWatchFrequencySeconds(
+                WatchFrequencyParser.parse(this.watchFrequency, 60 * 60)
+        );
         return getKey() != null &&
                 getKey().chars().allMatch((c) -> Character.isLetterOrDigit(c) || c == '-' || c == '_') &&
                 getKey().length() >= 3;
