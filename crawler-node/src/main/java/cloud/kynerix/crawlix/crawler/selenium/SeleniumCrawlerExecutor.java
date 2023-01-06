@@ -15,10 +15,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxDriverLogLevel;
-import org.openqa.selenium.firefox.FirefoxOptions;
-import org.openqa.selenium.firefox.GeckoDriverService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,14 +33,11 @@ public class SeleniumCrawlerExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SeleniumCrawlerExecutor.class.getName());
 
-    @ConfigProperty(name = "crawler.browser", defaultValue = "chrome")
-    String BROWSER;
-
-    @ConfigProperty(name = "crawler.gecko.driver")
-    String GECKO_DRIVER_PATH;
-
-    @ConfigProperty(name = "crawler.chrome.driver")
+    @ConfigProperty(name = "crawler.chrome.driver.path")
     String CHROME_DRIVER_PATH;
+
+    @ConfigProperty(name = "crawler.chrome.browser.path")
+    String CHROME_BROWSER_PATH;
 
     @ConfigProperty(name = "crawler.browser.headless", defaultValue = "true")
     boolean BROWSER_HEADLESS;
@@ -76,39 +69,24 @@ public class SeleniumCrawlerExecutor {
 
         WebDriver driver = null;
 
-        if (BROWSER.equalsIgnoreCase("firefox")) {
-            LOGGER.info("Building local driver with " + GECKO_DRIVER_PATH);
+        LOGGER.info("Building local driver with " + CHROME_DRIVER_PATH + " and arguments ");
 
-            System.setProperty(GeckoDriverService.GECKO_DRIVER_EXE_PROPERTY, GECKO_DRIVER_PATH);
-            System.setProperty(FirefoxDriver.SystemProperty.BROWSER_LOGFILE, "/dev/null");
+        System.setProperty("webdriver.chrome.driver", CHROME_DRIVER_PATH);
+        //System.setProperty("webdriver.chrome.logfile", "chromedriver.log");
 
-            FirefoxOptions firefoxOptions = new FirefoxOptions();
+        ChromeOptions chromeOptions = new ChromeOptions();
+        chromeOptions.setHeadless(BROWSER_HEADLESS);
+        chromeOptions.setBinary(CHROME_BROWSER_PATH);
+        chromeOptions.addArguments("--version", "--disable-web-security", "--ignore-certificate-errors", "--incognito");
 
-            firefoxOptions.setHeadless(BROWSER_HEADLESS);
-            firefoxOptions.setLogLevel(FirefoxDriverLogLevel.DEBUG);
-            firefoxOptions.addPreference("browser.tabs.remote.autostart", false);
-            firefoxOptions.addPreference("security.sandbox.content.level", 5);
-
-            driver = new FirefoxDriver(firefoxOptions);
-
-            LOGGER.info("Local FIREFOX driver created");
-        } else if (BROWSER.equalsIgnoreCase("chrome")) {
-            LOGGER.info("Building local driver with " + CHROME_DRIVER_PATH + " and arguments ");
-
-            System.setProperty("webdriver.chrome.driver", CHROME_DRIVER_PATH);
-            //System.setProperty("webdriver.chrome.logfile", "chromedriver.log");
-
-            ChromeOptions chromeOptions = new ChromeOptions();
-            chromeOptions.setHeadless(BROWSER_HEADLESS);
-            chromeOptions.addArguments("version", "disable-web-security");
-            //chromeOptions.setBinary("")
-
+        try {
+            LOGGER.debug("Creating driver with driver at " + CHROME_DRIVER_PATH + " and browser at " + CHROME_BROWSER_PATH);
             driver = new ChromeDriver(chromeOptions);
-
-            LOGGER.info("Local CHROME driver created");
-        } else {
-            LOGGER.error("UNKNOWN browser: " + BROWSER);
+        } catch (Exception e) {
+            LOGGER.error("Can't build Chrome driver", e);
         }
+
+        LOGGER.info("Local CHROME driver created");
 
         return driver;
     }
@@ -127,6 +105,10 @@ public class SeleniumCrawlerExecutor {
 
     WebDriver beginCrawling(Plugin plugin) throws Exception {
         WebDriver driver = buildLocalDriver();
+        if (driver == null) {
+            LOGGER.error("Can't build driver");
+            return null;
+        }
 
         int height = plugin.getBrowserHeight();
         int width = plugin.getBrowserWidth();
@@ -205,15 +187,85 @@ public class SeleniumCrawlerExecutor {
         executeJS(driver, ijs);
     }
 
-    int analyzeHttpCode(WebDriver driver) {
-        String title = driver.getTitle();
-        if (title != null && title.contains("404")) {
-            return HttpURLConnection.HTTP_NOT_FOUND;
+    String getCurrentLocation(WebDriver driver) {
+        String windowLocation = (String) executeJS(driver, "return window.location.href;");
+        LOGGER.debug("Current brower location: " + windowLocation);
+        return windowLocation;
+    }
+
+    String getCurrentBodyText(WebDriver driver) {
+        String bodyText = (String) executeJS(driver, "return document.body.innerText.trim();");
+        LOGGER.debug("Current body text: " + bodyText);
+        return bodyText;
+    }
+
+    String getBrowserReportedErrorCode(WebDriver driver) {
+        String errorCode = null;
+        errorCode = (String) executeJS(driver, "let e = document.querySelector('error-cod'); return e == null ? null : e.innerText");
+        if (errorCode != null) {
+            LOGGER.debug("Browser error code: " + errorCode);
+        }
+        return errorCode;
+    }
+
+    String collectBrowserInfo(WebDriver driver) {
+        String browserInfo = (String) executeJS(driver, "return [window.clientInformation.userAgent, window.clientInformation.appVersion, window.clientInformation.language, window.clientInformation.platform].join(' | ')");
+        LOGGER.debug(browserInfo);
+        return browserInfo;
+    }
+
+    void parseException(WebDriverException ex, WebDriver driver, CrawlingResults results) {
+        results.setSuccess(false);
+
+        String msg = ex.getMessage();
+
+        if (msg != null) {
+            // Try to parse error from message
+            int left = msg.indexOf("ERR_");
+            if (left != -1) {
+                int right = msg.indexOf("\n", left);
+                if (right != -1) {
+                    results.setBrowserErrorCode(msg.substring(left, right));
+                    results.setError(results.getBrowserErrorCode() + " at " + driver.getCurrentUrl());
+                    results.setErrorDetails(msg);
+                }
+            }
         }
 
-        // TODO: Confirm not found or http code, extend for other codes
+        if (results.getBrowserErrorCode() == null) {
+            results.setBrowserErrorCode("UNKNOWN");
+            results.setError("Generic error loading " + driver.getCurrentUrl());
+        }
+    }
 
-        return HttpURLConnection.HTTP_OK;
+    void analyzeBrowerResponse(WebDriver driver, CrawlingResults results) {
+        LOGGER.debug("---- Analysis of initial browser response ----");
+        results.setBrowserInfo(collectBrowserInfo(driver));
+        results.setBrowserErrorCode(getBrowserReportedErrorCode(driver));
+
+        String reportedLocation = getCurrentLocation(driver);
+
+        int httpCode = HttpURLConnection.HTTP_OK;
+
+        if (reportedLocation != null && reportedLocation.startsWith("chrome-error:") && results.getBrowserErrorCode() == null) {
+            httpCode = HttpURLConnection.HTTP_INTERNAL_ERROR;
+            results.setError("Unknown browser error: " + reportedLocation);
+            results.setErrorDetails(getCurrentBodyText(driver));
+            results.setBrowserErrorCode("UNKNOWN");
+            results.setSuccess(false);
+        } else if (results.getBrowserErrorCode() != null) {
+            // Full list at chrome://network-errors/
+            if (results.getBrowserErrorCode().startsWith("ERR_NAME")) {
+                httpCode = HttpURLConnection.HTTP_NOT_FOUND;
+            }
+            results.setError("Browser error: " + results.getBrowserErrorCode());
+            results.setErrorDetails(getCurrentBodyText(driver));
+            results.setSuccess(false);
+        } else {
+            results.setHttpCode(HttpURLConnection.HTTP_OK);
+        }
+
+        LOGGER.debug("----------------------------------------------");
     }
 
     String normalizeURL(String url) {
@@ -325,16 +377,22 @@ public class SeleniumCrawlerExecutor {
             // Start crawling
             driver = beginCrawling(plugin);
 
+            if (driver == null) {
+                results.setError("Failed to create browser driver.");
+                results.setSuccess(false);
+                return results;
+            }
+
             driver.navigate().to(url);
 
             waitForLoad();
 
             // Unfortunately, the WebDriver provides no easy way of retrieving the http code
             // Some basic heuristics to detect not found are needed instead
-            int httpCode = analyzeHttpCode(driver);
-            results.setHttpCode(httpCode);
 
-            if (httpCode != HttpURLConnection.HTTP_OK) {
+            analyzeBrowerResponse(driver, results);
+
+            if (results.getHttpCode() != HttpURLConnection.HTTP_OK) {
                 return results;
             }
 
@@ -360,13 +418,8 @@ public class SeleniumCrawlerExecutor {
 
         } catch (WebDriverException e) {
             // CATCH DNS errors and others
-            if (e.getMessage() != null && e.getMessage().contains("about:neterror?e=dnsNotFound")) {
-                // DNS not found error
-                LOGGER.error("DNS Error detected");
-                results.setError("DNS error: " + url);
-            } else {
-                results.setError("Error loading: " + url + " : " + e.getMessage());
-            }
+            parseException(e, driver, results);
+            LOGGER.error("Error loading " + driver.getCurrentUrl(), e);
         } catch (Exception e) {
             results.setError("Unknown error " + url + " : " + e.getClass().getName() + " : " + e.getMessage());
             LOGGER.error("Unknown error " + url, e);

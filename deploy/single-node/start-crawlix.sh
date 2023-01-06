@@ -46,7 +46,7 @@ echo "- Starting Infinispan container..."
 
 podman rm -i -f infinispan > /dev/null 2>&1
 
-podman run -d --name infinispan --network=host -e USER=$INFINISPAN_USER -e PASS=$INFINISPAN_PASS quay.io/infinispan/server:latest &
+podman run -d --name infinispan --network=host -e USER=$INFINISPAN_USER -e PASS=$INFINISPAN_PASS quay.io/infinispan/server:latest
 
 wait_for_container "127.0.0.1" $INFINISPAN_PORT
 

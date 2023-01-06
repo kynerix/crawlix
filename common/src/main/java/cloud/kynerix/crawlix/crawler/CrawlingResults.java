@@ -2,9 +2,7 @@ package cloud.kynerix.crawlix.crawler;
 
 import cloud.kynerix.crawlix.content.Content;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class CrawlingResults {
 
@@ -14,10 +12,13 @@ public class CrawlingResults {
     private String plugin;
     private String url;
     private long jobId;
+    private String error;
+    private String browserErrorCode;
+    private String errorDetails;
+    private String browserInfo;
     private List<String> pluginLogs;
     private List<Content> content;
     private List<CrawlingJob> crawlingJobs;
-    private String error;
 
     public CrawlingResults() {
     }
@@ -52,6 +53,18 @@ public class CrawlingResults {
 
     public String getError() {
         return error;
+    }
+
+    public String getBrowserErrorCode() {
+        return browserErrorCode;
+    }
+
+    public String getErrorDetails() {
+        return errorDetails;
+    }
+
+    public String getBrowserInfo() {
+        return browserInfo;
     }
 
     public int getHttpCode() {
@@ -92,5 +105,17 @@ public class CrawlingResults {
 
     public void setHttpCode(int httpCode) {
         this.httpCode = httpCode;
+    }
+
+    public void setBrowserInfo(String browserInfo) {
+        this.browserInfo = browserInfo;
+    }
+
+    public void setBrowserErrorCode(String browserErrorCode) {
+        this.browserErrorCode = browserErrorCode;
+    }
+
+    public void setErrorDetails(String errorDetails) {
+        this.errorDetails = errorDetails;
     }
 }

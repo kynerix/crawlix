@@ -20,8 +20,8 @@ This set of containers provides the following Restful APIs:
 - Content search at */content* and GraphQL. Retrieve content by query.
 
 ### 3. The crawler nodes ###
-Each crawler node container has an **embedded Firefox**, that is initialized and controlled for every crawling job. Each node
-has an inner loop that looks for pending crawling jobs, lock one of them and runs the headless Firefox. The necessary
+Each crawler node container has an **embedded Chromium browser**, that is initialized and controlled for every crawling job. Each node
+has an inner loop that looks for pending crawling jobs, lock one of them and runs the headless browser. The necessary
 Javascript is injected and the execution results are either store as content for later query, or subsequent crawl jobs are created.
 
 ### 4. The controller ###

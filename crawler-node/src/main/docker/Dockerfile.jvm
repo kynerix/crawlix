@@ -6,22 +6,10 @@ ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
 USER root
 RUN dnf install -y java-11-openjdk
 RUN dnf install -y wget bzip2 psmisc net-tools iproute nmap unzip
-RUN dnf install -y firefox
-#RUN dnf install -y chromium
-
-RUN dnf -y install fedora-workstation-repositories
-RUN dnf -y install dnf-plugins-core
-RUN dnf config-manager --set-enabled google-chrome
-RUN dnf install -y google-chrome-stable
-
-# Download and install Gecko Driver
-RUN wget -q https://github.com/mozilla/geckodriver/releases/download/v0.30.0/geckodriver-v0.30.0-linux64.tar.gz && \
-    tar xvfz geckodriver-v0.30.0-linux64.tar.gz && \
-    mv geckodriver /usr/local/bin/ && \
-    rm geckodriver-v0.30.0-linux64.tar.gz
+RUN dnf install -y chromium
 
 # Download and install Chrome Driver
-RUN wget -q https://chromedriver.storage.googleapis.com/108.0.5359.71/chromedriver_linux64.zip && \
+RUN wget -q https://chromedriver.storage.googleapis.com/105.0.5195.52/chromedriver_linux64.zip && \
     unzip chromedriver_linux64.zip && \
     mv chromedriver /usr/local/bin/ && \
     rm chromedriver_linux64.zip

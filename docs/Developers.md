@@ -3,8 +3,12 @@
 ### Pre-requisites
 
 - Java 11+
-- Podman, for building and executing images. Docker can be used as well, although scripts are not provided, yet.
-- Firefox, in the PATH
+- Podman, for building and executing images. 
+  - Docker may be used as well, scripts not provided yet.
+- Chromium, in the PATH 
+  - default location is: */usr/bin/chromium-browser*
+- Chromium driver in the path 
+  - default location is: */usr/local/bin/chromedriver*
 - jq tool in the PATH
 
 ### **Step 1**. Start the Infinispan container
