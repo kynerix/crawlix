@@ -9,7 +9,9 @@
     <link rel="stylesheet" href="css/patternfly.css">
     <link rel="stylesheet" href="css/patternfly-addons.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
     <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.js"></script>
 
     <!-- Console javascript -->
@@ -85,13 +87,13 @@
                             <a href="/console/crawlers.html" class="pf-c-nav__link" aria-current="page">Crawlers</a>
                         </li>
                         <li class="pf-c-nav__item">
-                            <a href="/console/nodes.html" class="pf-c-nav__link">Crawler nodes</a>
+                            <a href="/console/nodes.html" class="pf-c-nav__link  pf-m-current">Nodes</a>
                         </li>
                         <li class="pf-c-nav__item">
                             <a href="/console/workspaces.html" class="pf-c-nav__link">Workspaces</a>
                         </li>
                         <li class="pf-c-nav__item">
-                            <a href="/console/jobs.html" class="pf-c-nav__link pf-m-current">Jobs</a>
+                            <a href="/console/jobs.html" class="pf-c-nav__link">Jobs</a>
                         </li>
                         <li class="pf-c-nav__item">
                             <a href="/console/resources.html" class="pf-c-nav__link">Resources</a>
@@ -117,8 +119,8 @@
                     </div>
                     <!-- END of SPINNER -->
                     <div class="pf-c-content">
-                        <h1>Crawling Jobs</h1>
-                        <p>List crawling jobs that are to be executed by crawlers.</p>
+                        <h1>Crawler nodes</h1>
+                        <p>List of crawler instances that can navigate and parse content from websites.</p>
                     </div>
                 </div>
             </section>
@@ -154,17 +156,11 @@
                     <table id="data-table" class="display compact" style="width:100%">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Crawler</th>
-                                <th>Workspace</th>
+                                <th>Key</th>
                                 <th>Status</th>
-                                <th>Action</th>
-                                <th style="max-width: 250px">URL</th>
-                                <th style="max-width: 250px">Context</th>
-                                <th>Node</th>
-                                <th>Error</th>
-                                <th># Failures</th>
-                                <th>Last attempt</th>
+                                <th>Message</th>
+                                <th>Endpoint</th>
+                                <th>Last start</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -182,50 +178,50 @@
             // DataTable Config
             $("#data-table").DataTable({
                 columns: [
-                    { data: "id" },
-                    { data: "crawler" },
-                    { data: "workspace", "defaultContent": "-" },
-                    { data: "status" },
-                    { data: "action" },
+                    { data: "key" },
                     {
-                        data: null,
-                        render: function (data) {
-                            return "<a href='" + data.url + "'>" + data.url + "</a>";
+                        render: function (data, type, rowData, meta) {
+                            return renderIcon(rowData.status, ["READY"], ["STOPPED"]) + rowData.status;
                         }
-
                     },
-                    { data: "context" },
-                    { data: "workerNode", "defaultContent": "-" },
-                    { data: "lastError" },
-                    { data: "consecutiveFailures" },
-                    { data: "lastCrawlAttempt" },
+                    { data: "message", "defaultContent": "-" },
+                    { data: "publicURI" },
+                    {
+                        render:
+                            function (data, type, rowData, meta) {
+                                return renderDate(rowData.lastStartTime);
+                            }
+                    },
                     {
                         data: null,
                         render: function (data, type, full, meta) {
                             // Inline action kebab renderer
                             return renderMenu(
                                 [
-                                    { title: "Delete job", action: "deleteJob('" + data.id + "', refreshTable)" }
+                                    { title: "Start", action: "startNode('" + data.key + "', refreshTable)" },
+                                    { title: "Stop", action: "stopNode('" + data.key + "', refreshTable)" }
                                 ]);
                         }
                     }
                 ],
                 order: [[0, 'desc']],
                 ajax: function (data, callback, settings) {
-                    sendRequest("GET", "/admin/list-jobs", function (data) {
+                    sendRequest("GET", "/admin/list-nodes", function (data) {
                         callback({ data: data });
                     });
                 }
             });
+
+            refreshTable();
         }
 
+
         $(document).ready(function () {
-            $(document).ready(function () {
-                if (checkAuthentication()) {
-                    initTable();
-                }
-            });
+            if (checkAuthentication()) {
+                initTable();
+            }
         });
+
     </script>
 </body>
 

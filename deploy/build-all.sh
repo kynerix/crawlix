@@ -14,7 +14,7 @@ pushd ../crawler-node/scripts
 ./build.sh
 popd
 
-pushd ../service/scripts
+pushd ../services/scripts
 ./build.sh
 popd
 
@@ -30,7 +30,7 @@ pushd ../crawler-node/scripts
 ./build-image.sh
 popd
 
-pushd ../service/scripts
+pushd ../services/scripts
 ./build-image.sh
 popd
 

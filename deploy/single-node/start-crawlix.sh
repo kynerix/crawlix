@@ -71,14 +71,14 @@ wait_for_container "127.0.0.1" $CONTROLLER_PORT
 echo "- CONTROLLER is ready in $CONTROLLER_PORT"
 echo "- Starting Service container..."
 
-podman rm -i -f crawlix-service > /dev/null 2>&1
+podman rm -i -f crawlix-services > /dev/null 2>&1
 
-podman run -d --name crawlix-service --network=host \
+podman run -d --name crawlix-services --network=host \
       -e QUARKUS_INFINISPAN_CLIENT_SERVER_LIST="127.0.0.1:$INFINISPAN_PORT" \
       -e QUARKUS_HTTP_PORT="$SERVICE_PORT" \
       -e QUARKUS_INFINISPAN_CLIENT_AUTH_USERNAME="$INFINISPAN_USER" \
       -e QUARKUS_INFINISPAN_CLIENT_AUTH_PASSWORD="$INFINISPAN_PASS" \
-      kynerix/crawlix-service
+      kynerix/crawlix-services
 
 wait_for_container 127.0.0.1 $SERVICE_PORT
 

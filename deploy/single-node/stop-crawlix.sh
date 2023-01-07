@@ -19,8 +19,8 @@ echo "- Loading configuration from: $CONFIG_FILE"
 
 . ${CONFIG_FILE}
 
-echo "- Stopping crawlix service"
-podman rm -i -f crawlix-service
+echo "- Stopping crawlix services"
+podman rm -i -f crawlix-services
 
 for i in `seq 1 ${NUM_CRAWLERS}`;
 do

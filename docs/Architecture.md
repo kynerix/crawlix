@@ -12,12 +12,13 @@ Using it through its Quarkus extension provides an easy mapping to the necessary
 The data store acts as the central point of coordination for both the controller and the crawler nodes, to exchange data,
 coordinate over queues of work and keep the parsing and extraction results, for later retrieval.
 
-### 2. The CrawliX service ###
-This set of containers provides the following Restful APIs:
+### 2. The CrawliX services ###
+This set of containers provides the following Restful APIs and services:
 
 - Administration of crawlers */crawlix*. Configure crawlers, execute them and get their status.
 - Platform administration at */admin*. Manage workspaces and security tokens.
 - Content search at */content*. Retrieve content by query.
+- Console UI at */console*
 
 ### 3. The crawler nodes ###
 Each crawler node container has an **embedded Chromium browser**, that is initialized and controlled for every crawling job. Each node

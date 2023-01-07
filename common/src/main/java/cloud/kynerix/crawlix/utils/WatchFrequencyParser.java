@@ -34,7 +34,7 @@ public class WatchFrequencyParser {
                         amount = 0;
                         break;
                     case "M":
-                        amount = amount;
+                        minutes = amount;
                         amount = 0;
                         break;
                     default:
