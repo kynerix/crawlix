@@ -1,7 +1,7 @@
 package cloud.kynerix.crawlix.workspaces;
 
 import cloud.kynerix.crawlix.admin.AuthManager;
-import cloud.kynerix.crawlix.crawler.CrawlingJobsManager;
+import cloud.kynerix.crawlix.crawler.CrawlJobsManager;
 import cloud.kynerix.crawlix.schema.InfinispanSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,7 @@ public class WorkspaceManager {
     @Inject
     AuthManager authManager;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CrawlingJobsManager.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(CrawlJobsManager.class.getName());
 
     public void removeWorkspace(String key) {
         if (key != null) {

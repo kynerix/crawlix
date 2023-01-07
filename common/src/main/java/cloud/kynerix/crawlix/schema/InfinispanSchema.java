@@ -1,8 +1,8 @@
 package cloud.kynerix.crawlix.schema;
 
 import cloud.kynerix.crawlix.content.Content;
-import cloud.kynerix.crawlix.crawler.CrawlingJob;
-import cloud.kynerix.crawlix.crawler.Plugin;
+import cloud.kynerix.crawlix.crawler.CrawlJob;
+import cloud.kynerix.crawlix.crawler.Crawler;
 import cloud.kynerix.crawlix.crawler.VisitedURL;
 import cloud.kynerix.crawlix.crawler.WorkerNode;
 import cloud.kynerix.crawlix.workspaces.Workspace;
@@ -43,7 +43,7 @@ public class InfinispanSchema {
     private static final String COUNTER_ID_JOBS = "CXA_ID_JOBS";
     private static final String COUNTER_ID_CONTENT = "CXA_ID_CONTENT";
 
-    private static final String CACHE_PLUGINS = "CXW_{WORKSPACE}_PLUGINS";
+    private static final String CACHE_CRAWLERS = "CXW_{WORKSPACE}_CRAWLERS";
     private static final String CACHE_JOBS = "CXW_{WORKSPACE}_JOBS";
     private static final String CACHE_CONTENT = "CXW_{WORKSPACE}_CONTENT";
     private static final String CACHE_VISITED = "CXW_{WORKSPACE}_VISITED";
@@ -144,12 +144,12 @@ public class InfinispanSchema {
         return name.replace("{WORKSPACE}", normalize(workspace.getKey()));
     }
 
-    public RemoteCache<String, Plugin> getPluginsCache(Workspace workspace) {
-        return (RemoteCache<String, Plugin>) this.getCache(buildCacheName(workspace, InfinispanSchema.CACHE_PLUGINS));
+    public RemoteCache<String, Crawler> getCrawlersCache(Workspace workspace) {
+        return (RemoteCache<String, Crawler>) this.getCache(buildCacheName(workspace, InfinispanSchema.CACHE_CRAWLERS));
     }
 
-    public RemoteCache<Long, CrawlingJob> getJobsCache(Workspace workspace) {
-        return (RemoteCache<Long, CrawlingJob>) this.getCache(buildCacheName(workspace, InfinispanSchema.CACHE_JOBS));
+    public RemoteCache<Long, CrawlJob> getJobsCache(Workspace workspace) {
+        return (RemoteCache<Long, CrawlJob>) this.getCache(buildCacheName(workspace, InfinispanSchema.CACHE_JOBS));
 
     }
 
@@ -158,13 +158,12 @@ public class InfinispanSchema {
         return (RemoteCache<String, VisitedURL>) this.getCache(buildCacheName(workspace, InfinispanSchema.CACHE_VISITED));
     }
 
-    String getContentCacheName(Workspace workspace, String customContentCache) {
-        return buildCacheName(workspace, InfinispanSchema.CACHE_CONTENT)
-                + (customContentCache == null ? "" : "_" + normalize(customContentCache));
+    String getContentCacheName(Workspace workspace) {
+        return buildCacheName(workspace, InfinispanSchema.CACHE_CONTENT);
     }
 
-    public RemoteCache<String, Content> getContentCache(Workspace workspace, String contentCache, boolean createIfNotExist) {
-        String cacheName = getContentCacheName(workspace, contentCache);
+    public RemoteCache<String, Content> getContentCache(Workspace workspace, boolean createIfNotExist) {
+        String cacheName = getContentCacheName(workspace);
         RemoteCache cache = (RemoteCache<String, Content>) this.getCache(cacheName);
         if (cache == null && createIfNotExist) {
             cache = initCache(cacheName, "crawlix.Content", 10, LIFESPAN_CONTENT_DAYS);
@@ -206,9 +205,9 @@ public class InfinispanSchema {
     }
 
     public void initWorkspaceSchema(Workspace workspace) {
-        initCache(buildCacheName(workspace, InfinispanSchema.CACHE_PLUGINS), null, 1000, -1);
-        initCache(buildCacheName(workspace, InfinispanSchema.CACHE_JOBS), "crawlix.CrawlingJob", 1000, LIFESPAN_JOBS_DAYS);
+        initCache(buildCacheName(workspace, InfinispanSchema.CACHE_CRAWLERS), null, 1000, -1);
+        initCache(buildCacheName(workspace, InfinispanSchema.CACHE_JOBS), "crawlix.CrawlJob", 1000, LIFESPAN_JOBS_DAYS);
         initCache(buildCacheName(workspace, InfinispanSchema.CACHE_VISITED), null, 1000, -1);
-        initCache(getContentCacheName(workspace, null), "crawlix.Content", 10, LIFESPAN_CONTENT_DAYS);
+        initCache(getContentCacheName(workspace), "crawlix.Content", 10, LIFESPAN_CONTENT_DAYS);
     }
 }

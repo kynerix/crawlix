@@ -33,8 +33,8 @@ public class ContentManager {
                 content.setKey("CXID_" + content.getId());
             }
 
-            LOGGER.debug("Saving content in store :" + content.getStore() + " with key " + content.getKey());
-            infinispanSchema.getContentCache(workspace, content.getStore(), true).put(content.getKey(), content);
+            LOGGER.debug("Saving content with key " + content.getKey());
+            infinispanSchema.getContentCache(workspace, true).put(content.getKey(), content);
         }
     }
 
@@ -43,7 +43,7 @@ public class ContentManager {
     }
 
     public List<Content> search(Workspace workspace, String optionalCacheName, String queryFilter, int startOffset, int maxResults) {
-        RemoteCache<String, Content> cache = infinispanSchema.getContentCache(workspace, optionalCacheName, false);
+        RemoteCache<String, Content> cache = infinispanSchema.getContentCache(workspace, false);
         if (cache == null) {
             return Collections.emptyList();
         }

@@ -11,7 +11,6 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-
     <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.js"></script>
 
     <!-- Console javascript -->
@@ -84,8 +83,8 @@
                 <nav class="pf-c-nav" id="compact-demo-primary-nav" aria-label="Global">
                     <ul class="pf-c-nav__list">
                         <li class="pf-c-nav__item">
-                            <a href="/console/plugins.html" class="pf-c-nav__link pf-m-current"
-                                aria-current="page">Plugins</a>
+                            <a href="/console/crawlers.html" class="pf-c-nav__link pf-m-current"
+                                aria-current="page">Crawlers</a>
                         </li>
                         <li class="pf-c-nav__item">
                             <a href="/console/nodes.html" class="pf-c-nav__link">Crawler nodes</a>
@@ -120,7 +119,7 @@
                     <!-- END of SPINNER -->
 
                     <div class="pf-c-content">
-                        <h1>Plugins</h1>
+                        <h1>Crawlers</h1>
                         <p>List of available crawler descriptors.</p>
                     </div>
                 </div>
@@ -174,15 +173,15 @@
     </div>
 
     <!----------------------------------------------------------------------------------------------------------------->
-    <!-- PLUGIN EXECUTION RESULTS MODAL                                                                              -->
+    <!-- CRAWLER EXECUTION RESULTS MODAL                                                                              -->
     <!----------------------------------------------------------------------------------------------------------------->
 
-    <div class="pf-c-backdrop" id="pluginResultsModal" style="visibility:hidden">
+    <div class="pf-c-backdrop" id="crawlerResultsModal" style="visibility:hidden">
         <div class="pf-l-bullseye">
             <div class="pf-c-modal-box pf-m-lg" role="dialog" aria-modal="true" aria-labelledby="modal-scroll-title"
                 aria-describedby="modal-scroll-description">
                 <button class="pf-c-button pf-m-plain" type="button" aria-label="Close dialog"
-                    onclick="hide('pluginResultsModal');">
+                    onclick="hide('crawlerResultsModal');">
                     <i class="fas fa-times" aria-hidden="true"></i>
                 </button>
                 <header class="pf-c-modal-box__header">
@@ -190,32 +189,32 @@
                         <span class="pf-c-icon__content pf-m-info">
                           <i class="fas fa-info-circle" aria-hidden="true"></i>
                         </span>
-                      </span> Plugin execution results</h1>
+                      </span> Crawler execution results</h1>
                     <div class="pf-c-modal-box__description" id="modal-scroll-description"></div>
-                    <div class="pf-c-tabs" id="pluginExecutionTabs" style="display: none;">
+                    <div class="pf-c-tabs" id="crawlerExecutionTabs" style="display: none;">
                         <ul class="pf-c-tabs__list">
-                            <li class="pf-c-tabs__item pf-m-current" id="pluginExecTabs_1">
+                            <li class="pf-c-tabs__item pf-m-current" id="crawlerExecTabs_1">
                                 <button type="button" class="pf-c-tabs__link"
-                                    onclick="showTabs(1, 4, 'pluginExecTabs', 'pluginExecDetails' );">
+                                    onclick="showTabs(1, 4, 'crawlerExecTabs', 'crawlerExecDetails' );">
                                     <span class="pf-c-tabs__item-text">Summary</span>
                                 </button>
                             </li>
-                            <li class="pf-c-tabs__item" id="pluginExecTabs_2">
+                            <li class="pf-c-tabs__item" id="crawlerExecTabs_2">
                                 <button type="button" class="pf-c-tabs__link"
-                                    onclick="showTabs(2, 4, 'pluginExecTabs', 'pluginExecDetails' );">
+                                    onclick="showTabs(2, 4, 'crawlerExecTabs', 'crawlerExecDetails' );">
                                     <span class="pf-c-tabs__item-text">Parsed content</span>
                                 </button>
                             </li>
-                            <li class="pf-c-tabs__item" id="pluginExecTabs_3">
+                            <li class="pf-c-tabs__item" id="crawlerExecTabs_3">
                                 <button type="button" class="pf-c-tabs__link"
-                                    onclick="showTabs(3, 4, 'pluginExecTabs', 'pluginExecDetails' );">
+                                    onclick="showTabs(3, 4, 'crawlerExecTabs', 'crawlerExecDetails' );">
                                     <span class="pf-c-tabs__item-text">Parsed links</span>
                                 </button>
                             </li>
-                            <li class="pf-c-tabs__item" id="pluginExecTabs_4">
+                            <li class="pf-c-tabs__item" id="crawlerExecTabs_4">
                                 <button type="button" class="pf-c-tabs__link"
-                                    onclick="showTabs(4, 4, 'pluginExecTabs', 'pluginExecDetails' );">
-                                    <span class="pf-c-tabs__item-text">Plugin logs</span>
+                                    onclick="showTabs(4, 4, 'crawlerExecTabs', 'crawlerExecDetails' );">
+                                    <span class="pf-c-tabs__item-text">Crawler logs</span>
                                 </button>
                             </li>
                         </ul>
@@ -224,45 +223,45 @@
 
                 <div class="pf-c-modal-box__body" tabindex="0">
 
-                    <div class="pf-c-code-block__content" id="pluginExecDetails_1">
+                    <div class="pf-c-code-block__content" id="crawlerExecDetails_1">
                         <textarea rows="15" class="pf-c-form-control" aria-invalid="false"
-                            id="pluginExecSummary"></textarea>
+                            id="crawlerExecSummary"></textarea>
                     </div>
 
-                    <div class="pf-c-code-block__content" id="pluginExecDetails_2">
+                    <div class="pf-c-code-block__content" id="crawlerExecDetails_2">
                         <textarea rows="15" class="pf-c-form-control" aria-invalid="false"
-                            id="pluginExecContent"></textarea></pre>
+                            id="crawlerExecContent"></textarea></pre>
                     </div>
 
-                    <div class="pf-c-code-block__content" id="pluginExecDetails_3">
+                    <div class="pf-c-code-block__content" id="crawlerExecDetails_3">
                         <textarea rows="15" class="pf-c-form-control" aria-invalid="false"
-                            id="pluginExecJobs"></textarea></pre>
+                            id="crawlerExecJobs"></textarea></pre>
                     </div>
 
-                    <div class="pf-c-code-block__content" id="pluginExecDetails_4">
+                    <div class="pf-c-code-block__content" id="crawlerExecDetails_4">
                         <textarea rows="15" class="pf-c-form-control" aria-invalid="false"
-                            id="pluginExecLogs"></textarea></pre>
+                            id="crawlerExecLogs"></textarea></pre>
                     </div>
 
                 </div>
                 <footer class="pf-c-modal-box__footer">
                     <button class="pf-c-button pf-m-primary" type="button"
-                        onclick="hide('pluginResultsModal');">Close</button>
+                        onclick="hide('crawlerResultsModal');">Close</button>
                 </footer>
             </div>
         </div>
     </div>
 
     <!----------------------------------------------------------------------------------------------------------------->
-    <!-- PLUGIN DETAILS MODAL                                                                                        -->
+    <!-- CRAWLER DETAILS MODAL                                                                                        -->
     <!----------------------------------------------------------------------------------------------------------------->
 
-    <div class="pf-c-backdrop" id="pluginDetailsModal" style="visibility:hidden">
+    <div class="pf-c-backdrop" id="crawlerDetailsModal" style="visibility:hidden">
         <div class="pf-l-bullseye">
             <div class="pf-c-modal-box pf-m-lg" role="dialog" aria-modal="true" aria-labelledby="modal-scroll-title"
                 aria-describedby="modal-scroll-description">
                 <button class="pf-c-button pf-m-plain" type="button" aria-label="Close dialog"
-                    onclick="hide('pluginDetailsTabs'); hide('pluginDetailsModal');">
+                    onclick="hide('crawlerDetailsTabs'); hide('crawlerDetailsModal');">
                     <i class="fas fa-times" aria-hidden="true"></i>
                 </button>
                 <header class="pf-c-modal-box__header">
@@ -270,20 +269,20 @@
                         <span class="pf-c-icon__content pf-m-info">
                           <i class="fas fa-info-circle" aria-hidden="true"></i>
                         </span>
-                      </span> Plugin details</h1>
+                      </span> Crawler details</h1>
 
                     <div class="pf-c-modal-box__description"></div>
-                    <div class="pf-c-tabs" id="pluginDetailsTabs" style="display: none;">
+                    <div class="pf-c-tabs" id="crawlerDetailsTabs" style="display: none;">
                         <ul class="pf-c-tabs__list">
-                            <li class="pf-c-tabs__item pf-m-current" id="pluginTabs_1">
+                            <li class="pf-c-tabs__item pf-m-current" id="crawlerTabs_1">
                                 <button type="button" class="pf-c-tabs__link"
-                                    onclick="showTabs(1, 2, 'pluginTabs', 'pluginDetails' );">
+                                    onclick="showTabs(1, 2, 'crawlerTabs', 'crawlerDetails' );">
                                     <span class="pf-c-tabs__item-text">Properties</span>
                                 </button>
                             </li>
-                            <li class="pf-c-tabs__item" id="pluginTabs_2">
+                            <li class="pf-c-tabs__item" id="crawlerTabs_2">
                                 <button type="button" class="pf-c-tabs__link" id="default-tabs-containers-link"
-                                    onclick="showTabs(2, 2, 'pluginTabs', 'pluginDetails' );">
+                                    onclick="showTabs(2, 2, 'crawlerTabs', 'crawlerDetails' );">
                                     <span class="pf-c-tabs__item-text">Script</span>
                                 </button>
                             </li>
@@ -292,20 +291,20 @@
                 </header>
 
                 <div class="pf-c-modal-box__body">
-                    <div class="pf-c-code-block__content " id="pluginDetails_1">
-                        <textarea class="pf-c-form-control" aria-invalid="false" id="pluginDetailsBlock"
+                    <div class="pf-c-code-block__content " id="crawlerDetails_1">
+                        <textarea class="pf-c-form-control" aria-invalid="false" id="crawlerDetailsBlock"
                             rows="15"></textarea></pre>
                     </div>
 
-                    <div class="pf-c-code-block__content" id="pluginDetails_2">
-                        <textarea class="pf-c-form-control" aria-invalid="false" id="pluginScriptBlock"
+                    <div class="pf-c-code-block__content" id="crawlerDetails_2">
+                        <textarea class="pf-c-form-control" aria-invalid="false" id="crawlerScriptBlock"
                             rows="15"></textarea>
                     </div>
                 </div>
 
                 <footer class="pf-c-modal-box__footer">
                     <button class="pf-c-button pf-m-primary" type="button"
-                        onclick="hide('pluginDetailsTabs'); hide('pluginDetailsModal');">Close</button>
+                        onclick="hide('crawlerDetailsTabs'); hide('crawlerDetailsModal');">Close</button>
                 </footer>
             </div>
         </div>
@@ -339,22 +338,22 @@
                             // Inline action kebab renderer
                             return renderMenu(
                                 [
-                                    { title: "View", action: "loadPlugin('" + data.workspace + "', '" + data.key + "', showPluginDetails)" },
+                                    { title: "View", action: "loadCrawler('" + data.workspace + "', '" + data.key + "', showCrawlerDetails)" },
                                     { separator: true },
-                                    { title: "Enable", action: "enablePlugin('" + data.workspace + "', '" + data.key + "', refreshTable)" },
-                                    { title: "Disable", action: "disablePlugin('" + data.workspace + "', '" + data.key + "', refreshTable)" },
+                                    { title: "Enable", action: "enableCrawler('" + data.workspace + "', '" + data.key + "', refreshTable)" },
+                                    { title: "Disable", action: "disableCrawler('" + data.workspace + "', '" + data.key + "', refreshTable)" },
                                     { separator: true },
-                                    { title: "Run Test", action: "testPlugin('" + data.workspace + "', '" + data.key + "', showPluginResults)" },
-                                    { title: "Execute", action: "executePlugin('" + data.workspace + "', '" + data.key + "', showPluginResults)" },
+                                    { title: "Run Test", action: "testCrawler('" + data.workspace + "', '" + data.key + "', showCrawlerResults)" },
+                                    { title: "Execute", action: "executeCrawler('" + data.workspace + "', '" + data.key + "', showCrawlerResults)" },
                                     //{ separator: true },
-                                    //{ title: "Delete", action: "deletePlugin('" + data.key + "', refreshTable)" },
+                                    //{ title: "Delete", action: "deleteCrawler('" + data.key + "', refreshTable)" },
                                 ]);
                         }
                     }
                 ],
                 order: [[0, 'desc']],
                 ajax: function (data, callback, settings) {
-                    sendRequest("GET", "/admin/list-plugins", function (data) {
+                    sendRequest("GET", "/admin/list-crawlers", function (data) {
                         callback({ data: data });
                     });
                 }
@@ -367,31 +366,31 @@
             }
         });
 
-        function showPluginResults(data) {
-            let logs = data.pluginLogs; delete data.pluginLogs;
+        function showCrawlerResults(data) {
+            let logs = data.crawlerLogs; delete data.crawlerLogs;
             let content = data.content; delete data.content;
-            let jobs = data.crawlingJobs; delete data.crawlingJobs;
+            let jobs = data.crawlJobs; delete data.crawlJobs;
 
-            update('pluginExecSummary', JSON.stringify(data, null, 4));
-            update('pluginExecContent', JSON.stringify(content, null, 4));
-            update('pluginExecJobs', JSON.stringify(jobs, null, 4));
-            update('pluginExecLogs', JSON.stringify(logs, null, 4));
+            update('crawlerExecSummary', JSON.stringify(data, null, 4));
+            update('crawlerExecContent', JSON.stringify(content, null, 4));
+            update('crawlerExecJobs', JSON.stringify(jobs, null, 4));
+            update('crawlerExecLogs', JSON.stringify(logs, null, 4));
 
-            show('pluginResultsModal');
-            show('pluginExecutionTabs');
-            showTabs(1, 4, "pluginExecTabs", 'pluginExecDetails');
+            show('crawlerResultsModal');
+            show('crawlerExecutionTabs');
+            showTabs(1, 4, "crawlerExecTabs", 'crawlerExecDetails');
 
             refreshTable();
         }
 
-        function showPluginDetails(data) {
+        function showCrawlerDetails(data) {
             let script = data.script;
             delete data.script;
-            update('pluginDetailsBlock', JSON.stringify(data, null, 4));
-            update('pluginScriptBlock', script);
-            show('pluginDetailsModal');
-            show('pluginDetailsTabs');
-            showTabs(1, 2, "pluginTabs", 'pluginDetails');
+            update('crawlerDetailsBlock', JSON.stringify(data, null, 4));
+            update('crawlerScriptBlock', script);
+            show('crawlerDetailsModal');
+            show('crawlerDetailsTabs');
+            showTabs(1, 2, "crawlerTabs", 'crawlerDetails');
             refreshTable();
         }
     </script>

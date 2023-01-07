@@ -17,7 +17,7 @@ This set of containers provides the following Restful APIs:
 
 - Administration of crawlers */crawlix*. Configure crawlers, execute them and get their status.
 - Platform administration at */admin*. Manage workspaces and security tokens.
-- Content search at */content* and GraphQL. Retrieve content by query.
+- Content search at */content*. Retrieve content by query.
 
 ### 3. The crawler nodes ###
 Each crawler node container has an **embedded Chromium browser**, that is initialized and controlled for every crawling job. Each node

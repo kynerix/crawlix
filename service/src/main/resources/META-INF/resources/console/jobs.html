@@ -82,7 +82,7 @@
                 <nav class="pf-c-nav" id="compact-demo-primary-nav" aria-label="Global">
                     <ul class="pf-c-nav__list">
                         <li class="pf-c-nav__item">
-                            <a href="/console/plugins.html" class="pf-c-nav__link" aria-current="page">Plugins</a>
+                            <a href="/console/crawlers.html" class="pf-c-nav__link" aria-current="page">Crawlers</a>
                         </li>
                         <li class="pf-c-nav__item">
                             <a href="/console/nodes.html" class="pf-c-nav__link">Crawler nodes</a>
@@ -155,7 +155,7 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Plugin</th>
+                                <th>Crawler</th>
                                 <th>Workspace</th>
                                 <th>Status</th>
                                 <th>Action</th>
@@ -183,7 +183,7 @@
             $("#data-table").DataTable({
                 columns: [
                     { data: "id" },
-                    { data: "plugin" },
+                    { data: "crawler" },
                     { data: "workspace", "defaultContent": "-" },
                     { data: "status" },
                     { data: "action" },

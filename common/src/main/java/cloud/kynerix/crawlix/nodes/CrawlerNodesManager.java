@@ -101,11 +101,11 @@ public class CrawlerNodesManager {
         return null;
     }
 
-    public Response executeRemoteCrawler(String node, String workspaceKey, String pluginKey, boolean storeResults) throws Exception {
+    public Response executeRemoteCrawler(String node, String workspaceKey, String crawlerId, boolean storeResults) throws Exception {
         WorkerNode crawlerWorkerNode = getNode(node);
         if (crawlerWorkerNode != null) {
-            LOGGER.info("Running remote crawler " + pluginKey + " in node " + node);
-            return getWorkerNodeService(crawlerWorkerNode).execute(workspaceKey, pluginKey, storeResults);
+            LOGGER.info("Running remote crawler " + crawlerId + " in node " + node);
+            return getWorkerNodeService(crawlerWorkerNode).execute(workspaceKey, crawlerId, storeResults);
         } else {
             return null;
         }

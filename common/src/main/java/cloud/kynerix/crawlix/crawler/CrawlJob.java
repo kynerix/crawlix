@@ -6,7 +6,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 import java.util.Date;
 
 @ProtoDoc("@Indexed")
-public class CrawlingJob {
+public class CrawlJob {
 
     public static final String STATUS_WAITING = "WAITING";
     public static final String STATUS_RUNNING = "RUNNING";
@@ -18,7 +18,7 @@ public class CrawlingJob {
 
     private Long id;
     private String action;
-    private String plugin;
+    private String crawlerKey;
     private String workspace;
     private String status;
     private String URL;
@@ -30,7 +30,7 @@ public class CrawlingJob {
     private Date lastSuccessCrawl = null;
     private int consecutiveFailures = 0;
 
-    public CrawlingJob() {
+    public CrawlJob() {
     }
 
     @ProtoField(number = 1, required = true)
@@ -52,8 +52,8 @@ public class CrawlingJob {
 
     @ProtoField(number = 4)
     @ProtoDoc("@Field(index = Index.YES, store = Store.NO)")
-    public String getPlugin() {
-        return plugin;
+    public String getCrawlerKey() {
+        return crawlerKey;
     }
 
     @ProtoField(number = 5)
@@ -112,8 +112,8 @@ public class CrawlingJob {
         this.status = status;
     }
 
-    public void setPlugin(String plugin) {
-        this.plugin = plugin;
+    public void setCrawlerKey(String crawlerKey) {
+        this.crawlerKey = crawlerKey;
     }
 
     public void setURL(String URL) {
@@ -162,10 +162,10 @@ public class CrawlingJob {
 
     @Override
     public String toString() {
-        return "CrawlingJob{" +
+        return "CrawlJob{" +
                 "id=" + id +
                 ", action='" + action + '\'' +
-                ", plugin='" + plugin + '\'' +
+                ", crawlerId='" + crawlerKey + '\'' +
                 ", workspace='" + workspace + '\'' +
                 ", status='" + status + '\'' +
                 ", URL='" + URL + '\'' +

@@ -34,7 +34,7 @@ public interface CrawlerNodeClient {
     @Consumes(MediaType.APPLICATION_JSON)
     Response execute(
             @QueryParam("workspace") String workspaceId,
-            @QueryParam("plugin") String pluginId,
+            @QueryParam("crawler") String crawlerKey,
             @QueryParam("store-results") @DefaultValue("false") boolean persist
     );
 

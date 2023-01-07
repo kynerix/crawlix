@@ -54,7 +54,7 @@ curl -s -X  GET "http://localhost:8079/admin/list-workspaces" --header "Authoriz
 ```
 - Check the /crawlix service:
 ```
-curl -s -X  GET "http://localhost:8079/crawlix/default/list-plugins" --header "Authorization: 00-DEFAULT-TOKEN-00" | jq
+curl -s -X  GET "http://localhost:8079/crawlix/default/crawlers" --header "Authorization: 00-DEFAULT-TOKEN-00" | jq
 ```
 
 - Check the crawler node's health:

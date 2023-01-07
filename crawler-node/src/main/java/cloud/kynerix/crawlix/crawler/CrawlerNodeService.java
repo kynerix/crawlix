@@ -19,7 +19,7 @@ public class CrawlerNodeService {
     CrawlerNodeManager crawlerNodeManager;
 
     @Inject
-    PluginsManager pluginsManager;
+    CrawlersManager crawlersManager;
 
     @Inject
     WorkspaceManager workspaceManager;
@@ -56,7 +56,7 @@ public class CrawlerNodeService {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response execute(
             @QueryParam("workspace") String workspaceId,
-            @QueryParam("plugin") String pluginId,
+            @QueryParam("crawler") String crawlerKey,
             @QueryParam("store-results") @DefaultValue("false") boolean persist
     ) {
 
@@ -66,15 +66,15 @@ public class CrawlerNodeService {
             return Response.serverError().build();
         }
 
-        Plugin plugin = pluginsManager.getPlugin(workspace, pluginId);
-        if (plugin == null) {
-            LOGGER.error("Invalid plugin: " + pluginId);
+        Crawler crawler = crawlersManager.getCrawler(workspace, crawlerKey);
+        if (crawler == null) {
+            LOGGER.error("Invalid crawler: " + crawlerKey);
             return Response.serverError().build();
         }
 
-        CrawlingResults crawlingResults = crawlerNodeManager.runCrawlerExecution(workspace, null, plugin, persist);
+        CrawlResults crawlResults = crawlerNodeManager.runCrawlerExecution(workspace, null, crawler, persist);
 
-        return Response.accepted(crawlingResults).build();
+        return Response.accepted(crawlResults).build();
     }
 
     @GET

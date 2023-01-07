@@ -1,6 +1,6 @@
 package cloud.kynerix.crawlix.services;
 
-import cloud.kynerix.crawlix.crawler.Plugin;
+import cloud.kynerix.crawlix.crawler.Crawler;
 import cloud.kynerix.crawlix.crawler.WorkerNode;
 import cloud.kynerix.crawlix.workspaces.Workspace;
 
@@ -16,68 +16,68 @@ import java.util.List;
 public class CrawlixService extends BaseService {
 
     @POST
-    @Path("/{workspace}/install-plugin")
+    @Path("/{workspace}/install-crawler")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response installPlugin(
+    public Response installCrawler(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @PathParam("workspace") String paramWorkspace,
-            Plugin plugin) {
+            Crawler crawler) {
 
         Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
         if (!authManager.canAccessWorkspace(authHeader, workspace)) {
             return noAuth();
         }
-        if (plugin.isValid()) {
-            pluginsManager.save(workspace, plugin);
-            pluginsManager.checkScriptURLForUpdate(workspace, plugin);
-            return operationResults(true, "Plugin " + plugin.getKey() + " updated");
+        if (crawler.isValid()) {
+            crawlersManager.save(workspace, crawler);
+            crawlersManager.checkScriptURLForUpdate(workspace, crawler);
+            return operationResults(true, "Crawler " + crawler.getKey() + " updated");
         } else {
-            LOGGER.error("Invalid plugin definition: " + plugin);
-            return operationResults(false, "Invalid plugin definition. Please check the field key is set with the right format.");
+            LOGGER.error("Invalid crawler definition: " + crawler);
+            return operationResults(false, "Invalid crawler definition. Please check the field key is set with the right format.");
         }
     }
 
     @POST
-    @Path("/{workspace}/install-plugins")
+    @Path("/{workspace}/install-crawlers")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response installPlugins(
+    public Response installCrawlers(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @PathParam("workspace") String paramWorkspace,
-            List<Plugin> pluginList) {
+            List<Crawler> crawlerList) {
 
         Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
         if (!authManager.canAccessWorkspace(authHeader, workspace)) {
             return noAuth();
         }
-        if (pluginList == null || pluginList.isEmpty()) {
-            return operationResults(false, "List of plugins must be provided for bulk installation");
+        if (crawlerList == null || crawlerList.isEmpty()) {
+            return operationResults(false, "List of crawlers must be provided for bulk installation");
         }
 
-        pluginList.forEach(plugin -> {
+        crawlerList.forEach(crawler -> {
             try {
-                if (plugin.isValid()) {
-                    pluginsManager.save(workspace, plugin);
-                    pluginsManager.checkScriptURLForUpdate(workspace, plugin);
+                if (crawler.isValid()) {
+                    crawlersManager.save(workspace, crawler);
+                    crawlersManager.checkScriptURLForUpdate(workspace, crawler);
                 } else {
-                    LOGGER.error("Invalid plugin definition: " + plugin);
+                    LOGGER.error("Invalid crawler definition: " + crawler);
                 }
             } catch (Exception e) {
-                LOGGER.error("Error updating plugin", e);
+                LOGGER.error("Error updating crawler", e);
             }
         });
 
-        return operationResults(true, pluginList.size() + " plugin(s) updated");
+        return operationResults(true, crawlerList.size() + " crawlers(s) updated");
     }
 
     @POST
-    @Path("/{workspace}/install-script")
+    @Path("/{workspace}/crawlers/{crawler}/script")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
     public Response installScript(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
-            @QueryParam("plugin") String pluginKey,
+            @PathParam("crawler") String crawlerKey,
             @PathParam("workspace") String paramWorkspace,
             String script) {
 
@@ -85,23 +85,23 @@ public class CrawlixService extends BaseService {
         if (!authManager.canAccessWorkspace(authHeader, workspace)) {
             return noAuth();
         }
-        Plugin plugin = pluginsManager.getPlugin(workspace, pluginKey);
-        if (plugin == null) {
-            return operationResults(false, "Plugin " + pluginKey + " not found");
+        Crawler crawler = crawlersManager.getCrawler(workspace, crawlerKey);
+        if (crawler == null) {
+            return operationResults(false, "Crawler " + crawlerKey + " not found");
         }
 
-        plugin.setScript(script);
-        pluginsManager.save(workspace, plugin);
+        crawler.setScript(script);
+        crawlersManager.save(workspace, crawler);
 
-        return operationResults(true, "Plugin " + pluginKey + " script updated");
+        return operationResults(true, "Crawler " + crawlerKey + " script updated");
     }
 
     @GET
-    @Path("/{workspace}/get-script")
+    @Path("/{workspace}/crawlers/{crawler}/script")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getScript(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
-            @QueryParam("plugin") String pluginKey,
+            @PathParam("crawler") String crawlerKey,
             @PathParam("workspace") String paramWorkspace) {
 
         Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
@@ -109,20 +109,20 @@ public class CrawlixService extends BaseService {
             return noAuth();
         }
 
-        Plugin plugin = pluginsManager.getPlugin(workspace, pluginKey);
-        if (plugin == null) {
-            return operationResults(false, "Invalid plugin " + pluginKey);
+        Crawler crawler = crawlersManager.getCrawler(workspace, crawlerKey);
+        if (crawler == null) {
+            return operationResults(false, "Invalid crawler " + crawlerKey);
         }
 
-        return Response.accepted(plugin.getScript()).build();
+        return Response.accepted(crawler.getScript()).build();
     }
 
     @GET
-    @Path("/{workspace}/get-plugin")
+    @Path("/{workspace}/crawlers/{crawler}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getPlugin(
+    public Response getCrawler(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
-            @QueryParam("plugin") String pluginKey,
+            @PathParam("crawler") String crawlerKey,
             @PathParam("workspace") String paramWorkspace) {
 
         Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
@@ -130,22 +130,22 @@ public class CrawlixService extends BaseService {
             return noAuth();
         }
 
-        Plugin plugin = pluginsManager.getPlugin(workspace, pluginKey);
-        if (plugin == null) {
-            return operationResults(false, "Invalid plugin " + pluginKey);
+        Crawler crawler = crawlersManager.getCrawler(workspace, crawlerKey);
+        if (crawler == null) {
+            return operationResults(false, "Invalid crawlerKey " + crawlerKey);
         }
 
-        return Response.accepted(plugin).build();
+        return Response.accepted(crawler).build();
     }
 
 
     @DELETE
-    @Path("/{workspace}/delete-plugin")
+    @Path("/{workspace}/crawlers/{crawler}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response deletePlugin(
+    public Response deleteCrawler(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
-            @QueryParam("plugin") String key,
+            @PathParam("crawler") String crawlerKey,
             @PathParam("workspace") String paramWorkspace) {
 
         Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
@@ -153,83 +153,83 @@ public class CrawlixService extends BaseService {
             return noAuth();
         }
 
-        pluginsManager.delete(workspace, key);
-        crawlingJobsManager.deletePluginJobs(workspace, key);
+        crawlersManager.delete(workspace, crawlerKey);
+        crawlJobsManager.deleteJobs(workspace, crawlerKey);
 
-        return operationResults(true, "Crawler " + key + " deleted. Total number of crawlers currently installed is " + pluginsManager.size(workspace));
+        return operationResults(true, "Crawler " + crawlerKey + " deleted. Total number of crawlers currently installed is " + crawlersManager.size(workspace));
     }
 
     @GET
-    @Path("/{workspace}/list-plugins")
+    @Path("/{workspace}/crawlers")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response listPlugins(
+    public Response listCrawlers(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @PathParam("workspace") String paramWorkspace
     ) {
-        List<Plugin> plugins;
+        List<Crawler> crawlers;
 
         if (paramWorkspace == null && authManager.isAdminToken(authHeader)) {
-            plugins = pluginsManager.getAllPlugins();
+            crawlers = crawlersManager.getAllCrawlers();
         } else {
             Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
             if (!authManager.canAccessWorkspace(authHeader, workspace)) {
                 return noAuth();
             }
-            plugins = pluginsManager.getAllPlugins(workspace);
+            crawlers = crawlersManager.getAllCrawlers(workspace);
         }
 
-        LOGGER.info("Listed " + plugins.size() + " crawler plugins");
+        LOGGER.info("Listed " + crawlers.size() + " crawler crawlers");
 
-        return Response.ok(plugins).build();
+        return Response.ok(crawlers).build();
     }
 
     @PUT
-    @Path("/{workspace}/enable-plugin")
+    @Path("/{workspace}/crawlers/{crawler}/enable")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response enablePlugin(
+    public Response enableCrawler(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
-            @QueryParam("plugin") String crawler,
+            @PathParam("crawler") String crawlerKey,
             @PathParam("workspace") String paramWorkspace
     ) {
-        return changePluginStatus(authHeader, crawler, paramWorkspace, Plugin.STATUS_ENABLED);
+        return changeCrawlerStatus(authHeader, crawlerKey, paramWorkspace, Crawler.STATUS_ENABLED);
     }
 
     @PUT
-    @Path("/{workspace}/disable-plugin")
+    @Path("/{workspace}/crawlers/{crawler}/disable")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response disablePlugin(
+    public Response disableCrawler(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
-            @QueryParam("plugin") String crawler,
+            @PathParam("crawler") String crawlerKey,
             @PathParam("workspace") String paramWorkspace) {
-        return changePluginStatus(authHeader, crawler, paramWorkspace, Plugin.STATUS_DISABLED);
+        return changeCrawlerStatus(authHeader, crawlerKey, paramWorkspace, Crawler.STATUS_DISABLED);
     }
 
-    private Response changePluginStatus(String authHeader, String crawler, String paramWorkspace, String status) {
+    private Response changeCrawlerStatus(String authHeader, String crawlerKey, String paramWorkspace, String status) {
         Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
         if (!authManager.canAccessWorkspace(authHeader, workspace)) {
             return noAuth();
         }
-        LOGGER.info("Starting plugin " + crawler);
-        Plugin plugin = pluginsManager.getPlugin(workspace, crawler);
-        if (plugin != null) {
-            plugin.setStatus(status);
-            pluginsManager.save(workspace, plugin);
-            return operationResults(true, "Plugin " + plugin + " status set to " + status);
+        LOGGER.info("Starting crawlerKey " + crawlerKey);
+        Crawler crawler = crawlersManager.getCrawler(workspace, crawlerKey);
+        if (crawler != null) {
+            crawler.setStatus(status);
+            crawlersManager.save(workspace, crawler);
+            return operationResults(true, "Crawler " + crawlerKey + " status set to " + status);
         } else {
-            return operationResults(false, "Plugin " + plugin + " not found");
+            return operationResults(false, "Crawler " + crawlerKey + " not found");
         }
     }
 
     @PUT
-    @Path("/{workspace}/execute")
+    @Path("/{workspace}/crawlers/{crawler}/execute")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response execute(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
-            @QueryParam("plugin") String pluginKey,
+            @PathParam("crawler") String crawlerKey,
             @PathParam("workspace") String paramWorkspace,
             @QueryParam("store-results") @DefaultValue("false") boolean storeResults) {
 
@@ -237,14 +237,14 @@ public class CrawlixService extends BaseService {
         if (!authManager.canAccessWorkspace(authHeader, workspace)) {
             return noAuth();
         }
-        LOGGER.info("Running plugin " + pluginKey + " once");
+        LOGGER.info("Running crawler " + crawlerKey + " once");
 
-        Plugin plugin = pluginsManager.getPlugin(workspace, pluginKey);
-        if (plugin == null) {
-            return operationResults(false, "Plugin " + pluginKey + " not found");
+        Crawler crawler = crawlersManager.getCrawler(workspace, crawlerKey);
+        if (crawler == null) {
+            return operationResults(false, "Crawler " + crawlerKey + " not found");
         }
 
-        pluginsManager.checkScriptURLForUpdate(workspace, plugin);
+        crawlersManager.checkScriptURLForUpdate(workspace, crawler);
 
         // Execute remotely and return response
         WorkerNode node = workerNodesManager.getRandomNode();
@@ -253,15 +253,15 @@ public class CrawlixService extends BaseService {
         } else {
             LOGGER.debug("Executing in worker node " + node.getKey());
             try {
-                Response response = workerNodesManager.executeRemoteCrawler(node.getKey(), workspace.getKey(), pluginKey, storeResults);
+                Response response = workerNodesManager.executeRemoteCrawler(node.getKey(), workspace.getKey(), crawlerKey, storeResults);
                 if (response == null) {
                     return operationResults(false, "Unknown error");
                 } else {
                     return response;
                 }
             } catch (Exception e) {
-                LOGGER.error("Error executing plugin " + pluginKey + " in node " + node, e);
-                return operationResults(false, "Error executing plugin " + pluginKey + " - Exception: " + e.getClass().getName());
+                LOGGER.error("Error executing crawler " + crawlerKey + " in node " + node, e);
+                return operationResults(false, "Error executing crawler " + crawlerKey + " - Exception: " + e.getClass().getName());
             }
         }
     }

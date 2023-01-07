@@ -72,7 +72,7 @@ function checkAuthentication() {
 }
 
 function _afterLoginSuccessful() {
-    document.location = "/console/plugins.html";
+    document.location = "/console/crawlers.html";
 }
 
 /* ----------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -301,35 +301,35 @@ function deleteWorkspace(workspace, callback = null) {
     );
 }
 
-function enablePlugin(workspace, plugin, callback = null) {
-    sendRequest("PUT", "/crawlix/" + workspace + "/enable-plugin?plugin=" + plugin,
+function enableCrawler(workspace, crawlerKey, callback = null) {
+    sendRequest("PUT", "/crawlix/" + workspace + "/crawlers/" + crawlerKey + "/enable",
         function (data) { operationResult(data); if (callback) callback(data); }
     );
 }
 
-function disablePlugin(workspace, plugin, callback = null) {
-    sendRequest("PUT", "/crawlix/" + workspace + "/disable-plugin?plugin=" + plugin,
+function disableCrawler(workspace, crawlerKey, callback = null) {
+    sendRequest("PUT", "/crawlix/" + workspace + "/crawlers/" + crawlerKey + "/disable",
         function (data) { operationResult(data); if (callback) callback(data); }
     );
 }
 
-function testPlugin(workspace, plugin, callback = null) {
+function testCrawler(workspace, crawlerKey, callback = null) {
 
-    sendRequest("PUT", "/crawlix/" + workspace + "/execute?plugin=" + plugin,
+    sendRequest("PUT", "/crawlix/" + workspace + "/crawlers/" + crawlerKey + "/execute",
         function (data) { operationResult(data); if (callback) callback(data); },
         false /* Show results regardless of reported success status */
     );
 }
 
-function executePlugin(workspace, plugin, callback = null) {
-    sendRequest("PUT", "/crawlix/" + workspace + "/execute?plugin=" + plugin + "&store-results=true",
+function executeCrawler(workspace, crawlerKey, callback = null) {
+    sendRequest("PUT", "/crawlix/" + workspace + "/crawlers/" + crawlerKey + "/execute?store-results=true",
         function (data) { operationResult(data); if (callback) callback(data); },
         false /* Show results regardless of reported success status */
     );
 }
 
-function loadPlugin(workspace, plugin, callback = null) {
-    sendRequest("GET", "/crawlix/" + workspace + "/get-plugin?plugin=" + plugin,
+function loadCrawler(workspace, crawlerKey, callback = null) {
+    sendRequest("GET", "/crawlix/" + workspace + "/crawlers/" + crawlerKey,
         function (data) { if (callback) callback(data); }
     );
 }

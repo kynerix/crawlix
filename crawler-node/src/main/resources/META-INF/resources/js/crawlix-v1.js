@@ -1,8 +1,8 @@
 /* CrawliX library for creating crawler plugins.
 
-   To test your plugin in your local browser, open the Javascript console and paste the following JS snippet.
+   To test your crawler plugin in your local browser, open the Javascript console and paste the following JS snippet.
   
-   See examples of plugins at https://github.com/kynerix/crawlix-lib
+   See examples of crawler plugins at https://github.com/kynerix/crawlix-lib
 
 (function(d, script) {
 script = d.createElement('script');
@@ -37,14 +37,14 @@ class CrawliX {
     _reset() {
         this._urlsFound = [];      // Subsequent discovered navigation path to be crawled
         this._contentFound = [];   // List of consolidated content objects
-        this._success = null;      // Report of plugin success
+        this._success = null;      // Report of crawling success
 
         // Parameters controlling the extract options
         this._optionExtractProperty = 'innerText';      // Extract plain text
         this._optionSeparator = ', ';                   // Separator when joining multiple strings into one
 
         this._currentContent = [{}];                    // Active list of contents
-        this._logs = [];                                // Plugin logs for later analylis
+        this._logs = [];                                // Crawling logs for later analysis
     }
 
     requiredParam(param, defaultValue = null) {
@@ -464,14 +464,14 @@ class CrawlixLinksParser {
         this._currentURLs = [];      // Current list of links found
     }
 
-    find(cssSelector = "a", plugin = null, filterFunction = null) {
+    find(cssSelector = "a", crawlerKey = null, filterFunction = null) {
         let urls = this.crawlix.select(cssSelector, filterFunction);
 
         let linkObjects = urls.map(link => {
             return {
                 url: link.href,
                 title: link.innerText.trim(),
-                plugin: plugin,
+                crawlerKey: crawlerKey,
                 parent: location.href,
                 action: "parse"
             }

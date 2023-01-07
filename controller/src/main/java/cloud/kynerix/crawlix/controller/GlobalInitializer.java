@@ -1,7 +1,7 @@
 package cloud.kynerix.crawlix.controller;
 
 import cloud.kynerix.crawlix.admin.AuthManager;
-import cloud.kynerix.crawlix.crawler.CrawlingJobsManager;
+import cloud.kynerix.crawlix.crawler.CrawlJobsManager;
 import cloud.kynerix.crawlix.schema.InfinispanSchema;
 import cloud.kynerix.crawlix.workspaces.Workspace;
 import cloud.kynerix.crawlix.workspaces.WorkspaceManager;
@@ -47,7 +47,7 @@ public class GlobalInitializer {
     @Inject
     AuthManager authManager;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CrawlingJobsManager.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(CrawlJobsManager.class.getName());
 
     void initWorkspaces() {
         if (CREATE_DEFAULT_WORKSPACE) {

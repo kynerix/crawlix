@@ -2,8 +2,8 @@ package cloud.kynerix.crawlix.services;
 
 import cloud.kynerix.crawlix.admin.AuthManager;
 import cloud.kynerix.crawlix.content.ContentManager;
-import cloud.kynerix.crawlix.crawler.CrawlingJobsManager;
-import cloud.kynerix.crawlix.crawler.PluginsManager;
+import cloud.kynerix.crawlix.crawler.CrawlJobsManager;
+import cloud.kynerix.crawlix.crawler.CrawlersManager;
 import cloud.kynerix.crawlix.nodes.CrawlerNodesManager;
 import cloud.kynerix.crawlix.workspaces.WorkspaceManager;
 import org.slf4j.Logger;
@@ -19,7 +19,7 @@ public abstract class BaseService {
     final Logger LOGGER = LoggerFactory.getLogger(this.getClass().getName());
 
     @Inject
-    PluginsManager pluginsManager;
+    CrawlersManager crawlersManager;
 
     @Inject
     WorkspaceManager workspaceManager;
@@ -31,7 +31,7 @@ public abstract class BaseService {
     CrawlerNodesManager workerNodesManager;
 
     @Inject
-    CrawlingJobsManager crawlingJobsManager;
+    CrawlJobsManager crawlJobsManager;
 
     @Inject
     AuthManager authManager;

@@ -2,10 +2,10 @@ package cloud.kynerix.crawlix.crawler.selenium;
 
 import cloud.kynerix.crawlix.content.Content;
 import cloud.kynerix.crawlix.content.ContentManager;
-import cloud.kynerix.crawlix.crawler.CrawlingJob;
-import cloud.kynerix.crawlix.crawler.CrawlingJobsManager;
-import cloud.kynerix.crawlix.crawler.CrawlingResults;
-import cloud.kynerix.crawlix.crawler.Plugin;
+import cloud.kynerix.crawlix.crawler.CrawlJob;
+import cloud.kynerix.crawlix.crawler.Crawler;
+import cloud.kynerix.crawlix.crawler.CrawlJobsManager;
+import cloud.kynerix.crawlix.crawler.CrawlResults;
 import cloud.kynerix.crawlix.workspaces.Workspace;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -55,7 +55,7 @@ public class SeleniumCrawlerExecutor {
     String JAVASCRIPT_URL;
 
     @Inject
-    CrawlingJobsManager crawlingJobsManager;
+    CrawlJobsManager crawlJobsManager;
 
     @Inject
     ContentManager contentManager;
@@ -103,15 +103,15 @@ public class SeleniumCrawlerExecutor {
         }
     }
 
-    WebDriver beginCrawling(Plugin plugin) throws Exception {
+    WebDriver beginCrawling(Crawler crawler) throws Exception {
         WebDriver driver = buildLocalDriver();
         if (driver == null) {
             LOGGER.error("Can't build driver");
             return null;
         }
 
-        int height = plugin.getBrowserHeight();
-        int width = plugin.getBrowserWidth();
+        int height = crawler.getBrowserHeight();
+        int width = crawler.getBrowserWidth();
 
         LOGGER.debug("Screen size set to : " + width + " x " + height);
 
@@ -214,7 +214,7 @@ public class SeleniumCrawlerExecutor {
         return browserInfo;
     }
 
-    void parseException(WebDriverException ex, WebDriver driver, CrawlingResults results) {
+    void parseException(WebDriverException ex, WebDriver driver, CrawlResults results) {
         results.setSuccess(false);
 
         String msg = ex.getMessage();
@@ -238,7 +238,7 @@ public class SeleniumCrawlerExecutor {
         }
     }
 
-    void analyzeBrowerResponse(WebDriver driver, CrawlingResults results) {
+    void analyzeBrowerResponse(WebDriver driver, CrawlResults results) {
         LOGGER.debug("---- Analysis of initial browser response ----");
         results.setBrowserInfo(collectBrowserInfo(driver));
         results.setBrowserErrorCode(getBrowserReportedErrorCode(driver));
@@ -283,25 +283,25 @@ public class SeleniumCrawlerExecutor {
         return null;
     }
 
-    List<CrawlingJob> createURLFoundJobs(Workspace workspace, Map jsonParsedResults, Plugin plugin, boolean persist) {
-        List<CrawlingJob> jobs = new ArrayList<>();
+    List<CrawlJob> createURLFoundJobs(Workspace workspace, Map jsonParsedResults, Crawler crawler, boolean persist) {
+        List<CrawlJob> jobs = new ArrayList<>();
 
         List<Map> urls = (List<Map>) jsonParsedResults.get("_urlsFound");
         if (urls != null && !urls.isEmpty()) {
             for (Map urlObject : urls) {
                 String url = normalizeURL((String) urlObject.get("url"));
                 String text = (String) urlObject.get("title");
-                String pluginKey = (String) urlObject.get("plugin");
+                String crawlerKey = (String) urlObject.get("crawlerKey");
                 String parent = (String) urlObject.get("parent");
                 String action = (String) urlObject.get("action");
 
-                String targetPlugin = pluginKey == null ? plugin.getKey() : pluginKey;
+                String targetCrawler = crawlerKey == null ? crawler.getKey() : crawlerKey;
 
                 if (url != null                                                             // URL must be valid
-                        && !crawlingJobsManager.isURLVisited(workspace, targetPlugin, url)  // Do not visit the same URL multiple times over a scan
-                        && !crawlingJobsManager.existsJob(workspace, targetPlugin, url)     // Do not create the same job for the same URL multiple times
+                        && !crawlJobsManager.isURLVisited(workspace, targetCrawler, url)  // Do not visit the same URL multiple times over a scan
+                        && !crawlJobsManager.existsJob(workspace, targetCrawler, url)     // Do not create the same job for the same URL multiple times
                 ) {
-                    CrawlingJob job = crawlingJobsManager.newJob(workspace, targetPlugin, url, parent);
+                    CrawlJob job = crawlJobsManager.newJob(workspace, targetCrawler, url, parent);
                     if (action != null) {
                         job.setAction(action.toUpperCase());
                     }
@@ -309,7 +309,7 @@ public class SeleniumCrawlerExecutor {
                         job.setContext("[" + text + "]");
                     }
                     if (persist) {
-                        crawlingJobsManager.save(workspace, job);
+                        crawlJobsManager.save(workspace, job);
                     }
                     jobs.add(job);
                 } else {
@@ -321,7 +321,7 @@ public class SeleniumCrawlerExecutor {
         return jobs;
     }
 
-    List<Content> createContentFound(Workspace workspace, Map jsonParsedResults, Plugin plugin, boolean persist) {
+    List<Content> createContentFound(Workspace workspace, Map jsonParsedResults, Crawler crawler, boolean persist) {
         List<Map> contentList = (List<Map>) jsonParsedResults.get("_contentFound");
         List<Content> savedContent = new ArrayList<>();
         if (contentList != null && !contentList.isEmpty()) {
@@ -336,7 +336,7 @@ public class SeleniumCrawlerExecutor {
                 content.setKey((String) contentObject.get("key"));
                 content.setType((String) contentObject.get("type"));
                 content.setFoundTime(new Date());
-                content.setPlugin(plugin.getKey());
+                content.setCrawlerKey(crawler.getKey());
 
                 if (persist) {
                     contentManager.save(workspace, content);
@@ -349,13 +349,13 @@ public class SeleniumCrawlerExecutor {
         return savedContent;
     }
 
-    public CrawlingResults runCrawler(Workspace workspace, Plugin plugin, CrawlingJob crawlingJob, boolean persistData) {
+    public CrawlResults runCrawler(Workspace workspace, Crawler crawler, CrawlJob crawlJob, boolean persistData) {
 
-        String url = crawlingJob == null ? plugin.getDefaultURL() : crawlingJob.getURL();
+        String url = crawlJob == null ? crawler.getDefaultURL() : crawlJob.getURL();
 
         WebDriver driver = null;
 
-        CrawlingResults results = new CrawlingResults();
+        CrawlResults results = new CrawlResults();
         results.setSuccess(false);
         if (url == null) {
             results.setError("URL is null");
@@ -364,18 +364,18 @@ public class SeleniumCrawlerExecutor {
 
         try {
 
-            if (plugin == null) {
-                throw new Exception("Plugin " + plugin + " not found");
+            if (crawler == null) {
+                throw new Exception("Crawler " + crawler + " not found");
             }
 
             results.setUrl(url);
-            results.setPlugin(plugin.getKey());
-            if (crawlingJob != null) {
-                results.setJobId(crawlingJob.getId());
+            results.setCrawlerKey(crawler.getKey());
+            if (crawlJob != null) {
+                results.setJobId(crawlJob.getId());
             }
 
             // Start crawling
-            driver = beginCrawling(plugin);
+            driver = beginCrawling(crawler);
 
             if (driver == null) {
                 results.setError("Failed to create browser driver.");
@@ -396,17 +396,17 @@ public class SeleniumCrawlerExecutor {
                 return results;
             }
 
-            if (crawlingJob != null && CrawlingJob.ACTION_CHECK.equals(crawlingJob.getAction())) {
+            if (crawlJob != null && CrawlJob.ACTION_CHECK.equals(crawlJob.getAction())) {
                 // If the job is just about checking the existence of the page but no parsing, stop here
                 results.setSuccess(true);
                 return results;
             }
 
-            // Inject context JS (optional), library and plugin JS
-            String pluginJS = plugin.getScript() == null ? null : plugin.getScript();
+            // Inject context JS (optional), library and crawler JS
+            String pluginJS = crawler.getScript() == null ? null : crawler.getScript();
             String libraryURL = JAVASCRIPT_URL + JAVASCRIPT_LIBRARY;
-            if (plugin.getContextScript() != null) {
-                injectJS(driver, plugin.getContextScript());
+            if (crawler.getContextScript() != null) {
+                injectJS(driver, crawler.getContextScript());
             }
             injectJSLibrary(driver, libraryURL, pluginJS);
             waitForProcessing();
@@ -414,7 +414,7 @@ public class SeleniumCrawlerExecutor {
             // Save results
             LOGGER.debug("Retrieving results");
 
-            parseBrowserResults(driver, workspace, plugin, persistData, results);
+            parseBrowserResults(driver, workspace, crawler, persistData, results);
 
         } catch (WebDriverException e) {
             // CATCH DNS errors and others
@@ -430,7 +430,7 @@ public class SeleniumCrawlerExecutor {
         return results;
     }
 
-    private void parseBrowserResults(WebDriver driver, Workspace workspace, Plugin plugin, boolean persistData, CrawlingResults results) {
+    private void parseBrowserResults(WebDriver driver, Workspace workspace, Crawler crawler, boolean persistData, CrawlResults results) {
         String jsonResults = (String) executeJS(driver, "return crawlix._getResults();");
 
         if (jsonResults != null && jsonResults.trim().length() > 0) {
@@ -439,14 +439,14 @@ public class SeleniumCrawlerExecutor {
                 ObjectMapper om = new ObjectMapper();
                 Map parsedResults = om.readValue(jsonResults, HashMap.class);
                 boolean successParsing = Boolean.parseBoolean(String.valueOf(parsedResults.get("_success")));
-                results.setPluginLogs((List<String>) parsedResults.get("_logs"));
+                results.setCrawlerLogs((List<String>) parsedResults.get("_logs"));
 
                 if (successParsing) {
-                    List<Content> savedContent = createContentFound(workspace, parsedResults, plugin, persistData);
+                    List<Content> savedContent = createContentFound(workspace, parsedResults, crawler, persistData);
                     results.setContent(savedContent);
 
                     // Process parsed results
-                    List<CrawlingJob> savedJobs = createURLFoundJobs(workspace, parsedResults, plugin, persistData);
+                    List<CrawlJob> savedJobs = createURLFoundJobs(workspace, parsedResults, crawler, persistData);
                     results.setCrawlingJobs(savedJobs);
                     results.setSuccess(true);
                 }
@@ -454,7 +454,7 @@ public class SeleniumCrawlerExecutor {
                 LOGGER.error("Error parsing results", e);
             }
         } else {
-            results.setError("Error injecting Javascript. Please, check the syntax for plugin " + plugin.getKey());
+            results.setError("Error injecting Javascript. Please, check the syntax for crawler " + crawler.getKey());
         }
     }
 

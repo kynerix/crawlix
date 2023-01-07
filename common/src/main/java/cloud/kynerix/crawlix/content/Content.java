@@ -17,8 +17,7 @@ public class Content {
     private String author;
     private String url;
     private Date foundTime;
-    private String plugin;
-    private String store;
+    private String crawlerKey;
 
     public Content() {
     }
@@ -79,14 +78,8 @@ public class Content {
 
     @ProtoField(number = 10)
     @ProtoDoc("@Field(index = Index.YES, store = Store.NO)")
-    public String getPlugin() {
-        return plugin;
-    }
-
-    @ProtoField(number = 11)
-    @ProtoDoc("@Field(index = Index.YES, store = Store.NO)")
-    public String getStore() {
-        return store;
+    public String getCrawlerKey() {
+        return crawlerKey;
     }
 
     public void setId(Long id) {
@@ -121,15 +114,11 @@ public class Content {
         this.foundTime = foundTime;
     }
 
-    public void setPlugin(String plugin) {
-        this.plugin = plugin;
+    public void setCrawlerKey(String crawlerKey) {
+        this.crawlerKey = crawlerKey;
     }
 
     public void setType(String type) {
         this.type = type;
-    }
-
-    public void setStore(String store) {
-        this.store = store;
     }
 }

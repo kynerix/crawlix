@@ -5,7 +5,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 
 import java.util.Date;
 
-public class Plugin {
+public class Crawler {
 
     public final static String STATUS_ENABLED = "ENABLED";
     public final static String STATUS_DISABLED = "DISABLED";
@@ -161,7 +161,7 @@ public class Plugin {
 
     @Override
     public String toString() {
-        return "Plugin{" +
+        return "Crawler{" +
                 "key='" + key + '\'' +
                 ", workspace='" + workspace + '\'' +
                 ", status='" + status + '\'' +
@@ -171,6 +171,7 @@ public class Plugin {
                 ", loadPauseMs=" + loadPauseMs +
                 ", browserWidth=" + browserWidth +
                 ", browserHeight=" + browserHeight +
+                ", watchFrequency='" + watchFrequency + '\'' +
                 ", watchFrequencySeconds=" + watchFrequencySeconds +
                 ", lastUpdate=" + lastUpdate +
                 ", contextScript='" + contextScript + '\'' +

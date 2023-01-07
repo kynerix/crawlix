@@ -1,7 +1,7 @@
 package cloud.kynerix.crawlix.services;
 
-import cloud.kynerix.crawlix.crawler.CrawlingJob;
-import cloud.kynerix.crawlix.crawler.Plugin;
+import cloud.kynerix.crawlix.crawler.CrawlJob;
+import cloud.kynerix.crawlix.crawler.Crawler;
 import cloud.kynerix.crawlix.nodes.CrawlerNodesManager;
 import cloud.kynerix.crawlix.workspaces.Workspace;
 
@@ -87,20 +87,20 @@ public class CrawlixAdminService extends BaseService {
     public Response jobs(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("workspace") String workspaceKey,
-            @QueryParam("plugin") String plugin
+            @QueryParam("crawler") String crawlerKey
     ) {
         if (!authManager.isAdminToken(authHeader)) {
             return noAuth();
         }
 
-        LOGGER.info("Retrieving all jobs for workspace: " + workspaceKey + " and plugin: " + plugin);
+        LOGGER.info("Retrieving all jobs for workspace: " + workspaceKey + " and crawlerKey: " + crawlerKey);
 
-        List<CrawlingJob> jobs = new ArrayList<>();
+        List<CrawlJob> jobs = new ArrayList<>();
         for (Workspace workspace : workspaceManager.getWorkspaces()) {
             if (workspaceKey == null || workspace.getKey().equals(workspaceKey)) {
-                jobs.addAll(crawlingJobsManager.findAllJobs(workspace).stream().filter(
-                        (CrawlingJob job) -> {
-                            return plugin == null || plugin.equals(job.getPlugin());
+                jobs.addAll(crawlJobsManager.findAllJobs(workspace).stream().filter(
+                        (CrawlJob job) -> {
+                            return crawlerKey == null || crawlerKey.equals(job.getCrawlerKey());
                         }
                 ).collect(Collectors.toList()));
             }
@@ -110,10 +110,10 @@ public class CrawlixAdminService extends BaseService {
     }
 
     @GET
-    @Path("/list-plugins")
+    @Path("/list-crawlers")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response listPlugins(
+    public Response listCrawlers(
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authHeader,
             @QueryParam("workspace") String paramWorkspace
     ) {
@@ -121,18 +121,18 @@ public class CrawlixAdminService extends BaseService {
             return noAuth();
         }
 
-        List<Plugin> plugins;
+        List<Crawler> crawlers;
 
         if (paramWorkspace == null) {
-            plugins = pluginsManager.getAllPlugins();
+            crawlers = crawlersManager.getAllCrawlers();
         } else {
             Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
-            plugins = pluginsManager.getAllPlugins(workspace);
+            crawlers = crawlersManager.getAllCrawlers(workspace);
         }
 
-        LOGGER.info("Listed " + plugins.size() + " crawler plugins");
+        LOGGER.info("Listed " + crawlers.size() + " crawler crawlers");
 
-        return Response.ok(plugins).build();
+        return Response.ok(crawlers).build();
     }
 
     @POST

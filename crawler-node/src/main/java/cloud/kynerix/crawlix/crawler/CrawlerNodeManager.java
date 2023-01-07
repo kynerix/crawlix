@@ -40,10 +40,10 @@ public class CrawlerNodeManager {
     private boolean stopCrawler = false;
 
     @Inject
-    CrawlingJobsManager crawlingJobsManager;
+    CrawlJobsManager crawlJobsManager;
 
     @Inject
-    PluginsManager pluginsManager;
+    CrawlersManager crawlersManager;
 
     @Inject
     InfinispanSchema infinispanSchema;
@@ -123,45 +123,45 @@ public class CrawlerNodeManager {
         infinispanSchema.getNodesCache().put(NODE_KEY, node);
     }
 
-    public CrawlingResults runCrawlerExecution(Workspace workspace, CrawlingJob crawlingJob, Plugin plugin, boolean persistData) {
+    public CrawlResults runCrawlerExecution(Workspace workspace, CrawlJob crawlJob, Crawler crawler, boolean persistData) {
 
-        CrawlingResults results = null;
+        CrawlResults results = null;
 
         String nextCrawlerStatus;
 
         // Execute job
-        String url = crawlingJob == null ? plugin.getDefaultURL() : crawlingJob.getURL();
+        String url = crawlJob == null ? crawler.getDefaultURL() : crawlJob.getURL();
 
-        if (crawlingJobsManager.isURLVisited(workspace, url, plugin.getKey())) {
+        if (crawlJobsManager.isURLVisited(workspace, url, crawler.getKey())) {
             LOGGER.debug("Already visited: " + url);
-            nextCrawlerStatus = CrawlingJob.STATUS_FINISHED_OK;
+            nextCrawlerStatus = CrawlJob.STATUS_FINISHED_OK;
         } else {
-            results = crawlerExecutor.runCrawler(workspace, plugin, crawlingJob, persistData);
+            results = crawlerExecutor.runCrawler(workspace, crawler, crawlJob, persistData);
 
             if (results.isSuccess()) {
                 LOGGER.debug("Crawl is successful. Deleting JOB");
-                plugin.setLastUpdate(new Date());
-                nextCrawlerStatus = CrawlingJob.STATUS_FINISHED_OK;
+                crawler.setLastUpdate(new Date());
+                nextCrawlerStatus = CrawlJob.STATUS_FINISHED_OK;
 
                 // Mark URL as visited
-                crawlingJobsManager.visitURL(workspace, plugin.getKey(), url);
+                crawlJobsManager.visitURL(workspace, crawler.getKey(), url);
             } else {
-                nextCrawlerStatus = CrawlingJob.STATUS_FINISHED_ERR;
+                nextCrawlerStatus = CrawlJob.STATUS_FINISHED_ERR;
                 LOGGER.debug("Crawl is NOT successful");
-                if (crawlingJob != null) {
-                    crawlingJob.setLastError("HTTP Code: " + results.getHttpCode());
-                    crawlingJob.incFailures();
-                    if (crawlingJob.getConsecutiveFailures() > MAX_CONSECUTIVE_FAILURES) {
-                        LOGGER.error("Job reached max failures " + MAX_CONSECUTIVE_FAILURES + " : " + crawlingJob);
+                if (crawlJob != null) {
+                    crawlJob.setLastError("HTTP Code: " + results.getHttpCode());
+                    crawlJob.incFailures();
+                    if (crawlJob.getConsecutiveFailures() > MAX_CONSECUTIVE_FAILURES) {
+                        LOGGER.error("Job reached max failures " + MAX_CONSECUTIVE_FAILURES + " : " + crawlJob);
                         // Mark URL as visited
-                        crawlingJobsManager.visitURL(workspace, plugin.getKey(), url);
+                        crawlJobsManager.visitURL(workspace, crawler.getKey(), url);
                     }
                 }
             }
         }
 
-        if (crawlingJob != null) {
-            crawlingJob.setStatus(nextCrawlerStatus);
+        if (crawlJob != null) {
+            crawlJob.setStatus(nextCrawlerStatus);
         }
 
         return results;
@@ -196,49 +196,49 @@ public class CrawlerNodeManager {
             for (Workspace workspace : workspaceManager.getWorkspaces()) {
                 LOGGER.debug("Checking workspace " + workspace.getKey());
 
-                CrawlingJob crawlingJob = null;
+                CrawlJob crawlJob = null;
 
                 WorkerNode workerNode = getWorkerNode();
                 try {
                     if (workerNode.isActive()) {
                         // TX1: Lock job
-                        crawlingJob = crawlingJobsManager.tryLockCrawlingJob(
+                        crawlJob = crawlJobsManager.tryLockCrawlingJob(
                                 workspace,
                                 workerNode,
-                                crawlingJobsManager.findPendingJobs(workspace)
+                                crawlJobsManager.findPendingJobs(workspace)
                         );
                     }
 
-                    if (crawlingJob == null) {
+                    if (crawlJob == null) {
                         LOGGER.debug("No job found for worker " + workerNode.getKey());
                     } else {
-                        Plugin plugin = pluginsManager.getPlugin(workspace, crawlingJob.getPlugin());
-                        if (plugin == null) {
-                            LOGGER.warn("Plugin is null for job " + crawlingJob);
-                        } else if (!plugin.isActive()) {
-                            LOGGER.warn("Plugin " + plugin.getKey() + " is inactive for job " + crawlingJob);
+                        Crawler crawler = crawlersManager.getCrawler(workspace, crawlJob.getCrawlerKey());
+                        if (crawler == null) {
+                            LOGGER.warn("Crawler is null for job " + crawlJob);
+                        } else if (!crawler.isActive()) {
+                            LOGGER.warn("Crawler " + crawler.getKey() + " is inactive for job " + crawlJob);
                         } else {
-                            crawlingJob.setWorkerNode(workerNode.getKey());
-                            crawlingJob.setStatus(CrawlingJob.STATUS_RUNNING);
-                            crawlingJob.setLastCrawlAttempt(new Date());
+                            crawlJob.setWorkerNode(workerNode.getKey());
+                            crawlJob.setStatus(CrawlJob.STATUS_RUNNING);
+                            crawlJob.setLastCrawlAttempt(new Date());
 
-                            crawlingJobsManager.save(workspace, crawlingJob);
-                            LOGGER.debug("Job locked " + crawlingJob);
+                            crawlJobsManager.save(workspace, crawlJob);
+                            LOGGER.debug("Job locked " + crawlJob);
 
-                            workerNode.setMessage("Running [ " + workspace.getKey() + " : " + plugin.getKey() + " : " + crawlingJob.getId() + " ]");
+                            workerNode.setMessage("Running [ " + workspace.getKey() + " : " + crawler.getKey() + " : " + crawlJob.getId() + " ]");
                             save(workerNode);
 
-                            CrawlingResults results = runCrawlerExecution(workspace, crawlingJob, plugin, true);
+                            CrawlResults results = runCrawlerExecution(workspace, crawlJob, crawler, true);
                             if (results.getHttpCode() == HttpURLConnection.HTTP_NOT_FOUND) {
                                 // Process not found
                                 saveNotFound(workspace, results);
                             }
 
                             // Update job
-                            crawlingJobsManager.save(workspace, crawlingJob);
+                            crawlJobsManager.save(workspace, crawlJob);
 
-                            // Update plugin
-                            pluginsManager.save(workspace, plugin);
+                            // Update crawler
+                            crawlersManager.save(workspace, crawler);
 
                             // Update node
                             workerNode.setMessage(null);
@@ -256,12 +256,12 @@ public class CrawlerNodeManager {
         LOGGER.info("Crawler " + getWorkerNode() + " STOPPED!");
     }
 
-    void saveNotFound(Workspace workspace, CrawlingResults results) {
+    void saveNotFound(Workspace workspace, CrawlResults results) {
         Content content = new Content();
         content.setFoundTime(new Date());
         content.setType("404");
         content.setUrl(results.getUrl());
-        content.setPlugin(results.getPlugin());
+        content.setCrawlerKey(results.getCrawlerKey());
         content.setTitle("NOT FOUND: " + results.getUrl());
         contentManager.save(workspace, content);
     }

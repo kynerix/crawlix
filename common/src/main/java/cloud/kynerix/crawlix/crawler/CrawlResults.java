@@ -4,31 +4,31 @@ import cloud.kynerix.crawlix.content.Content;
 
 import java.util.List;
 
-public class CrawlingResults {
+public class CrawlResults {
 
     private boolean success = false;
     private int httpCode = 0;
 
-    private String plugin;
+    private String crawlerKey;
     private String url;
     private long jobId;
     private String error;
     private String browserErrorCode;
     private String errorDetails;
     private String browserInfo;
-    private List<String> pluginLogs;
+    private List<String> crawlerLogs;
     private List<Content> content;
-    private List<CrawlingJob> crawlingJobs;
+    private List<CrawlJob> crawlJobs;
 
-    public CrawlingResults() {
+    public CrawlResults() {
     }
 
     public boolean isSuccess() {
         return success;
     }
 
-    public String getPlugin() {
-        return plugin;
+    public String getCrawlerKey() {
+        return crawlerKey;
     }
 
     public String getUrl() {
@@ -39,16 +39,16 @@ public class CrawlingResults {
         return jobId;
     }
 
-    public List<String> getPluginLogs() {
-        return pluginLogs;
+    public List<String> getCrawlerLogs() {
+        return crawlerLogs;
     }
 
     public List<Content> getContent() {
         return content;
     }
 
-    public List<CrawlingJob> getCrawlingJobs() {
-        return crawlingJobs;
+    public List<CrawlJob> getCrawlingJobs() {
+        return crawlJobs;
     }
 
     public String getError() {
@@ -75,8 +75,8 @@ public class CrawlingResults {
         this.success = success;
     }
 
-    public void setPlugin(String plugin) {
-        this.plugin = plugin;
+    public void setCrawlerKey(String crawlerKey) {
+        this.crawlerKey = crawlerKey;
     }
 
     public void setUrl(String url) {
@@ -87,16 +87,16 @@ public class CrawlingResults {
         this.jobId = jobId;
     }
 
-    public void setPluginLogs(List<String> pluginLogs) {
-        this.pluginLogs = pluginLogs;
+    public void setCrawlerLogs(List<String> crawlerLogs) {
+        this.crawlerLogs = crawlerLogs;
     }
 
     public void setContent(List<Content> content) {
         this.content = content;
     }
 
-    public void setCrawlingJobs(List<CrawlingJob> crawlingJobs) {
-        this.crawlingJobs = crawlingJobs;
+    public void setCrawlingJobs(List<CrawlJob> crawlJobs) {
+        this.crawlJobs = crawlJobs;
     }
 
     public void setError(String error) {

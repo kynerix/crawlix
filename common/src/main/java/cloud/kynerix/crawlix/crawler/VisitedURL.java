@@ -8,7 +8,7 @@ import java.util.Date;
 @ProtoDoc("@Indexed")
 public class VisitedURL {
     private String url;
-    private String plugin;
+    private String crawlerKey;
     private Date date;
 
     @ProtoField(number = 1)
@@ -18,8 +18,8 @@ public class VisitedURL {
 
     @ProtoField(number = 2)
     @ProtoDoc("@Field(index = Index.YES, store = Store.NO)")
-    public String getPlugin() {
-        return plugin;
+    public String getCrawlerKey() {
+        return crawlerKey;
     }
 
     @ProtoField(number = 3)
@@ -31,8 +31,8 @@ public class VisitedURL {
         this.url = url;
     }
 
-    public void setPlugin(String plugin) {
-        this.plugin = plugin;
+    public void setCrawlerKey(String crawlerKey) {
+        this.crawlerKey = crawlerKey;
     }
 
     public void setDate(Date date) {
@@ -43,7 +43,7 @@ public class VisitedURL {
     public String toString() {
         return "VisitedURL{" +
                 "url='" + url + '\'' +
-                ", plugin='" + plugin + '\'' +
+                ", crawlerKey='" + crawlerKey + '\'' +
                 ", date=" + date +
                 '}';
     }
