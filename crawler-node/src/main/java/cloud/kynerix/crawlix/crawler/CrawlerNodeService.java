@@ -72,7 +72,13 @@ public class CrawlerNodeService {
             return Response.serverError().build();
         }
 
-        CrawlResults crawlResults = crawlerNodeManager.runCrawlerExecution(workspace, null, crawler, persist);
+        CrawlResults crawlResults = crawlerNodeManager.runCrawler(
+                crawler.getDefaultURL(),
+                crawler,
+                null,
+                persist);
+
+        LOGGER.debug(crawlResults.toString());
 
         return Response.accepted(crawlResults).build();
     }
@@ -82,7 +88,7 @@ public class CrawlerNodeService {
     @Produces("application/javascript")
     public Response javascript() {
         String js = crawlerNodeManager.getInjectedJS();
-        if( js == null ) {
+        if (js == null) {
             LOGGER.error("Can't find JS");
         }
         if (js == null) return Response.noContent().build();

@@ -2,18 +2,25 @@ package cloud.kynerix.crawlix.crawler;
 
 import cloud.kynerix.crawlix.content.Content;
 
+import java.util.Date;
 import java.util.List;
 
 public class CrawlResults {
 
-    private boolean success = false;
-    private int httpCode = 0;
+    public static final String SUCCESS = "SUCCESS";
+    public static final String ERROR = "ERROR";
+    public static final String NOT_FOUND = "NOT_FOUND";
+    public static final String ALREADY_VISITED = "ALREADY_VISITED";
 
-    private String crawlerKey;
+    private String outcome;
+
     private String url;
-    private long jobId;
-    private String error;
+
+    private Date date;
+    private String crawlerKey;
     private String browserErrorCode;
+    private String error;
+
     private String errorDetails;
     private String browserInfo;
     private List<String> crawlerLogs;
@@ -21,42 +28,31 @@ public class CrawlResults {
     private List<CrawlJob> crawlJobs;
 
     public CrawlResults() {
-    }
-
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public String getCrawlerKey() {
-        return crawlerKey;
+        super();
     }
 
     public String getUrl() {
         return url;
     }
 
-    public long getJobId() {
-        return jobId;
+    public Date getDate() {
+        return date;
     }
 
-    public List<String> getCrawlerLogs() {
-        return crawlerLogs;
+    public String getCrawlerKey() {
+        return crawlerKey;
     }
 
-    public List<Content> getContent() {
-        return content;
-    }
-
-    public List<CrawlJob> getCrawlingJobs() {
-        return crawlJobs;
-    }
-
-    public String getError() {
-        return error;
+    public String getOutcome() {
+        return outcome;
     }
 
     public String getBrowserErrorCode() {
         return browserErrorCode;
+    }
+
+    public String getError() {
+        return error;
     }
 
     public String getErrorDetails() {
@@ -67,24 +63,24 @@ public class CrawlResults {
         return browserInfo;
     }
 
-    public int getHttpCode() {
-        return httpCode;
+    public List<String> getCrawlerLogs() {
+        return crawlerLogs;
     }
 
-    public void setSuccess(boolean success) {
-        this.success = success;
+    public List<Content> getContent() {
+        return content;
     }
 
-    public void setCrawlerKey(String crawlerKey) {
-        this.crawlerKey = crawlerKey;
+    public List<CrawlJob> getCrawlJobs() {
+        return crawlJobs;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    public void setErrorDetails(String errorDetails) {
+        this.errorDetails = errorDetails;
     }
 
-    public void setJobId(long jobId) {
-        this.jobId = jobId;
+    public void setBrowserInfo(String browserInfo) {
+        this.browserInfo = browserInfo;
     }
 
     public void setCrawlerLogs(List<String> crawlerLogs) {
@@ -95,27 +91,51 @@ public class CrawlResults {
         this.content = content;
     }
 
-    public void setCrawlingJobs(List<CrawlJob> crawlJobs) {
+    public void setCrawlJobs(List<CrawlJob> crawlJobs) {
         this.crawlJobs = crawlJobs;
     }
 
-    public void setError(String error) {
-        this.error = error;
+    public void setUrl(String url) {
+        this.url = url;
     }
 
-    public void setHttpCode(int httpCode) {
-        this.httpCode = httpCode;
+    public void setDate(Date date) {
+        this.date = date;
     }
 
-    public void setBrowserInfo(String browserInfo) {
-        this.browserInfo = browserInfo;
+    public void setCrawlerKey(String crawlerKey) {
+        this.crawlerKey = crawlerKey;
+    }
+
+    public void setOutcome(String outcome) {
+        this.outcome = outcome;
     }
 
     public void setBrowserErrorCode(String browserErrorCode) {
         this.browserErrorCode = browserErrorCode;
     }
 
-    public void setErrorDetails(String errorDetails) {
-        this.errorDetails = errorDetails;
+    public void setError(String error) {
+        this.error = error;
+    }
+
+    public boolean isSuccessful() {
+        return SUCCESS.equals(this.outcome);
+    }
+
+    @Override
+    public String toString() {
+        return "CrawlResults{" +
+                "outcome='" + outcome + '\'' +
+                ", url='" + url + '\'' +
+                ", date=" + date +
+                ", crawlerKey='" + crawlerKey + '\'' +
+                ", browserErrorCode='" + browserErrorCode + '\'' +
+                ", error='" + error + '\'' +
+                ", errorDetails='" + errorDetails + '\'' +
+                ", browserInfo='" + browserInfo + '\'' +
+                ", content=" + (content == null ? "0" : content.size()) +
+                ", crawlJobs=" + (crawlJobs == null ? "0" : crawlJobs.size()) +
+                '}';
     }
 }

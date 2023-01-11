@@ -29,8 +29,8 @@ public class CrawlixService extends BaseService {
             return noAuth();
         }
         if (crawler.isValid()) {
+            crawlersManager.updateScriptFromSource(crawler);
             crawlersManager.save(workspace, crawler);
-            crawlersManager.checkScriptURLForUpdate(workspace, crawler);
             return operationResults(true, "Crawler " + crawler.getKey() + " updated");
         } else {
             LOGGER.error("Invalid crawler definition: " + crawler);
@@ -58,8 +58,8 @@ public class CrawlixService extends BaseService {
         crawlerList.forEach(crawler -> {
             try {
                 if (crawler.isValid()) {
+                    crawlersManager.updateScriptFromSource(crawler);
                     crawlersManager.save(workspace, crawler);
-                    crawlersManager.checkScriptURLForUpdate(workspace, crawler);
                 } else {
                     LOGGER.error("Invalid crawler definition: " + crawler);
                 }
@@ -244,7 +244,7 @@ public class CrawlixService extends BaseService {
             return operationResults(false, "Crawler " + crawlerKey + " not found");
         }
 
-        crawlersManager.checkScriptURLForUpdate(workspace, crawler);
+        crawlersManager.updateScriptFromSource(crawler);
 
         // Execute remotely and return response
         WorkerNode node = workerNodesManager.getRandomNode();

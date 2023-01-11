@@ -11,7 +11,7 @@ public class Crawler {
     public final static String STATUS_DISABLED = "DISABLED";
 
     private String key;
-    private String workspace;
+    private String workspaceKey;
     private String status;
     private String defaultURL;
     private String script;
@@ -23,9 +23,11 @@ public class Crawler {
     private String watchFrequency;
     private int watchFrequencySeconds;
 
-    private Date lastUpdate;
-
     private String contextScript;
+
+    private Date lastStart;
+
+    private transient CrawlerStats stats;
 
     @ProtoField(number = 1)
     public String getKey() {
@@ -33,8 +35,8 @@ public class Crawler {
     }
 
     @ProtoField(number = 2)
-    public String getWorkspace() {
-        return workspace;
+    public String getWorkspaceKey() {
+        return workspaceKey;
     }
 
     @ProtoField(number = 3, defaultValue = STATUS_ENABLED)
@@ -78,20 +80,19 @@ public class Crawler {
     }
 
     @ProtoField(number = 11)
-    public Date getLastUpdate() {
-        return lastUpdate;
-    }
-
-    @ProtoField(number = 12)
     public String getScriptURL() {
         return scriptURL;
     }
 
-    @ProtoField(number = 13)
+    @ProtoField(number = 12)
     public String getContextScript() {
         return contextScript;
     }
 
+    @ProtoField(number = 13)
+    public Date getLastStart() {
+        return lastStart;
+    }
 
     public void setKey(String key) {
         this.key = key;
@@ -125,13 +126,8 @@ public class Crawler {
         this.watchFrequency = watchFrequency;
     }
 
-
     public void setLoadPauseMs(int loadPauseMs) {
         this.loadPauseMs = loadPauseMs;
-    }
-
-    public void setLastUpdate(Date lastUpdate) {
-        this.lastUpdate = lastUpdate;
     }
 
     public boolean isActive() {
@@ -146,8 +142,12 @@ public class Crawler {
         this.contextScript = contextScript;
     }
 
-    public void setWorkspace(String workspace) {
-        this.workspace = workspace;
+    public void setWorkspaceKey(String workspace) {
+        this.workspaceKey = workspace;
+    }
+
+    public void setLastStart(Date lastStart) {
+        this.lastStart = lastStart;
     }
 
     public boolean isValid() {
@@ -159,11 +159,19 @@ public class Crawler {
                 getKey().length() >= 3;
     }
 
+    public CrawlerStats getStats() {
+        return stats;
+    }
+
+    public void setStats(CrawlerStats stats) {
+        this.stats = stats;
+    }
+
     @Override
     public String toString() {
         return "Crawler{" +
                 "key='" + key + '\'' +
-                ", workspace='" + workspace + '\'' +
+                ", workspaceKey='" + workspaceKey + '\'' +
                 ", status='" + status + '\'' +
                 ", defaultURL='" + defaultURL + '\'' +
                 ", script='" + script + '\'' +
@@ -173,8 +181,8 @@ public class Crawler {
                 ", browserHeight=" + browserHeight +
                 ", watchFrequency='" + watchFrequency + '\'' +
                 ", watchFrequencySeconds=" + watchFrequencySeconds +
-                ", lastUpdate=" + lastUpdate +
                 ", contextScript='" + contextScript + '\'' +
+                ", lastStart=" + lastStart +
                 '}';
     }
 }

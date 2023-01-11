@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
-import java.net.HttpURLConnection;
 import java.util.Date;
 import java.util.Random;
 
@@ -56,6 +55,9 @@ public class CrawlerNodeManager {
 
     @Inject
     ContentManager contentManager;
+
+    @Inject
+    CrawlerStatsManager crawlerStatsManager;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CrawlerNodeManager.class.getName());
 
@@ -123,45 +125,69 @@ public class CrawlerNodeManager {
         infinispanSchema.getNodesCache().put(NODE_KEY, node);
     }
 
-    public CrawlResults runCrawlerExecution(Workspace workspace, CrawlJob crawlJob, Crawler crawler, boolean persistData) {
+    void saveNotFound(Workspace workspace, CrawlResults results) {
+        Content content = new Content();
+        content.setFoundTime(new Date());
+        content.setType("404");
+        content.setUrl(results.getUrl());
+        content.setCrawlerKey(results.getCrawlerKey());
+        content.setTitle("NOT FOUND: " + results.getUrl());
+        contentManager.save(workspace, content);
+    }
+
+    void saveCrawlResultStats(Crawler crawler, CrawlResults results) {
+        CrawlerStats stats = crawlerStatsManager.newEmptyStats(crawler, getWorkerNode());
+
+        stats.setBrowserErrorCodes(results.getBrowserErrorCode());
+        stats.setErrorCount(results.isSuccessful() ? 0 : 1);
+        stats.setPagesCount(1);
+        stats.setNotFoundCount(CrawlResults.NOT_FOUND.equals(results.getOutcome()) ? 1 : 0);
+        stats.setSuccessCount(results.isSuccessful() ? 1 : 0);
+        stats.setContentCount(results.getContent().size());
+        stats.setJobsCount(results.getCrawlJobs().size());
+
+        crawlerStatsManager.updateStats(stats);
+    }
+
+    public CrawlResults runCrawler(String url, Crawler crawler, CrawlJob crawlJob, boolean persistData) {
 
         CrawlResults results = null;
 
-        String nextCrawlerStatus;
+        Workspace workspace = workspaceManager.getWorkspaceByKey(crawler.getWorkspaceKey());
 
-        // Execute job
-        String url = crawlJob == null ? crawler.getDefaultURL() : crawlJob.getURL();
+        boolean runParser = crawlJob == null || CrawlJob.ACTION_PARSE.equals(crawlJob.getAction());
 
-        if (crawlJobsManager.isURLVisited(workspace, url, crawler.getKey())) {
-            LOGGER.debug("Already visited: " + url);
-            nextCrawlerStatus = CrawlJob.STATUS_FINISHED_OK;
-        } else {
-            results = crawlerExecutor.runCrawler(workspace, crawler, crawlJob, persistData);
+        // Run browser and plugin
+        results = crawlerExecutor.executeBrowser(url, crawler, runParser, persistData);
+        if (crawlJob != null) {
+            crawlJob.setOutcome(results.getOutcome());
+        }
 
-            if (results.isSuccess()) {
-                LOGGER.debug("Crawl is successful. Deleting JOB");
-                crawler.setLastUpdate(new Date());
-                nextCrawlerStatus = CrawlJob.STATUS_FINISHED_OK;
-
-                // Mark URL as visited
+        if (results.isSuccessful()) {
+            crawler.setStatus(CrawlJob.STATUS_FINISHED);
+            // Mark URL as visited
+            if (persistData) {
                 crawlJobsManager.visitURL(workspace, crawler.getKey(), url);
-            } else {
-                nextCrawlerStatus = CrawlJob.STATUS_FINISHED_ERR;
-                LOGGER.debug("Crawl is NOT successful");
-                if (crawlJob != null) {
-                    crawlJob.setLastError("HTTP Code: " + results.getHttpCode());
-                    crawlJob.incFailures();
-                    if (crawlJob.getConsecutiveFailures() > MAX_CONSECUTIVE_FAILURES) {
-                        LOGGER.error("Job reached max failures " + MAX_CONSECUTIVE_FAILURES + " : " + crawlJob);
-                        // Mark URL as visited
+            }
+        } else {
+            if (crawlJob != null) {
+                crawlJob.setLastError("Error code: " + results.getBrowserErrorCode() + " : " + results.getError());
+                crawlJob.incFailures();
+                if (crawlJob.getConsecutiveFailures() > MAX_CONSECUTIVE_FAILURES) {
+                    LOGGER.error("Job reached max failures " + MAX_CONSECUTIVE_FAILURES + " : " + crawlJob);
+                    // Mark URL as visited
+                    if (persistData) {
                         crawlJobsManager.visitURL(workspace, crawler.getKey(), url);
                     }
+                    crawlJob.setStatus(CrawlJob.STATUS_FINISHED);
+                } else {
+                    crawlJob.setStatus(CrawlJob.STATUS_WAITING);
                 }
             }
         }
 
-        if (crawlJob != null) {
-            crawlJob.setStatus(nextCrawlerStatus);
+        if (persistData) {
+            saveCrawlResultStats(crawler, results);
         }
 
         return results;
@@ -171,7 +197,6 @@ public class CrawlerNodeManager {
         return crawlerExecutor.getJavascriptLibraryContent();
     }
 
-
     public void onInit(@Observes StartupEvent ev) {
         init();
     }
@@ -180,9 +205,9 @@ public class CrawlerNodeManager {
         stop();
     }
 
-    //
-    //
-    //
+    // -----------------------------------------------------------------------------------------------------------------
+    // This is the main work loop for the crawler
+    // -----------------------------------------------------------------------------------------------------------------
 
     void runLoop() {
         do {
@@ -228,11 +253,7 @@ public class CrawlerNodeManager {
                             workerNode.setMessage("Running [ " + workspace.getKey() + " : " + crawler.getKey() + " : " + crawlJob.getId() + " ]");
                             save(workerNode);
 
-                            CrawlResults results = runCrawlerExecution(workspace, crawlJob, crawler, true);
-                            if (results.getHttpCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-                                // Process not found
-                                saveNotFound(workspace, results);
-                            }
+                            CrawlResults results = runCrawler(crawlJob.getURL(), crawler, crawlJob, true);
 
                             // Update job
                             crawlJobsManager.save(workspace, crawlJob);
@@ -254,15 +275,5 @@ public class CrawlerNodeManager {
         } while (!stopCrawler);
 
         LOGGER.info("Crawler " + getWorkerNode() + " STOPPED!");
-    }
-
-    void saveNotFound(Workspace workspace, CrawlResults results) {
-        Content content = new Content();
-        content.setFoundTime(new Date());
-        content.setType("404");
-        content.setUrl(results.getUrl());
-        content.setCrawlerKey(results.getCrawlerKey());
-        content.setTitle("NOT FOUND: " + results.getUrl());
-        contentManager.save(workspace, content);
     }
 }

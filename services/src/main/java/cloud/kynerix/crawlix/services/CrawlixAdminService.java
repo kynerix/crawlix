@@ -2,6 +2,7 @@ package cloud.kynerix.crawlix.services;
 
 import cloud.kynerix.crawlix.crawler.CrawlJob;
 import cloud.kynerix.crawlix.crawler.Crawler;
+import cloud.kynerix.crawlix.crawler.CrawlerStatsManager;
 import cloud.kynerix.crawlix.nodes.CrawlerNodesManager;
 import cloud.kynerix.crawlix.workspaces.Workspace;
 
@@ -23,6 +24,9 @@ public class CrawlixAdminService extends BaseService {
     @Inject
     CrawlerNodesManager crawlerWorkerNodesManager;
 
+    @Inject
+    CrawlerStatsManager crawlerStatsManager;
+
     @POST
     @Path("/auth")
     @Produces(MediaType.APPLICATION_JSON)
@@ -32,7 +36,7 @@ public class CrawlixAdminService extends BaseService {
     ) {
         LOGGER.info("Authenticating admin user");
 
-        if( loginParams == null ) {
+        if (loginParams == null) {
             return operationResults(false, "Invalid request");
         }
 
@@ -121,14 +125,17 @@ public class CrawlixAdminService extends BaseService {
             return noAuth();
         }
 
+        Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
+
         List<Crawler> crawlers;
 
         if (paramWorkspace == null) {
             crawlers = crawlersManager.getAllCrawlers();
         } else {
-            Workspace workspace = workspaceManager.getWorkspaceByKey(paramWorkspace);
             crawlers = crawlersManager.getAllCrawlers(workspace);
         }
+
+        crawlerStatsManager.refreshCrawlerStats(crawlers);
 
         LOGGER.info("Listed " + crawlers.size() + " crawler crawlers");
 
@@ -234,6 +241,7 @@ public class CrawlixAdminService extends BaseService {
 
         return operationResults(true, "New token '" + token + "' for workspace '" + workspace.getKey() + "' has been generated.");
     }
+
     @PUT
     @Path("/start-node")
     @Produces(MediaType.APPLICATION_JSON)

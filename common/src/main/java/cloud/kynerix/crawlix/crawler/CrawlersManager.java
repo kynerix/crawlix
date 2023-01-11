@@ -31,8 +31,17 @@ public class CrawlersManager {
         return infinispanSchema.getCrawlersCache(workspace).get(crawlerKey);
     }
 
+    public Workspace getWorkspace(Crawler crawler) {
+        if (crawler == null) return null;
+        return workspaceManager.getWorkspaceByKey(crawler.getWorkspaceKey());
+    }
+
+    public void save(Crawler crawler) {
+        save(getWorkspace(crawler), crawler);
+    }
+
     public void save(Workspace workspace, Crawler crawler) {
-        crawler.setWorkspace(workspace.getKey());
+        crawler.setWorkspaceKey(workspace.getKey());
 
         infinispanSchema.getCrawlersCache(workspace).put(crawler.getKey(), crawler);
     }
@@ -65,7 +74,8 @@ public class CrawlersManager {
         return filtered;
     }
 
-    public void checkScriptURLForUpdate(Workspace workspace, Crawler crawler) {
+
+    public void updateScriptFromSource(Crawler crawler) {
         if (crawler == null) return;
         if (crawler.getScriptURL() == null) return;
 
@@ -76,10 +86,13 @@ public class CrawlersManager {
                 LOGGER.debug("Updating crawler script from " + crawler.getScriptURL());
                 scriptBody = "// Updated from " + crawler.getScriptURL() + " at " + new Date() + "\n\r" + scriptBody;
                 crawler.setScript(scriptBody);
-                save(workspace, crawler);
             }
         } catch (IOException e) {
             LOGGER.error("Error loading script URL: " + crawler.getScriptURL(), e);
+            if (crawler.getScript() == null || crawler.getScript().isBlank()) {
+                // Disable crawler if there's not a previous version of the script
+                crawler.setStatus(Crawler.STATUS_DISABLED);
+            }
         }
     }
 }

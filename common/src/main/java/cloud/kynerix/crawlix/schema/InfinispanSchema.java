@@ -1,10 +1,7 @@
 package cloud.kynerix.crawlix.schema;
 
 import cloud.kynerix.crawlix.content.Content;
-import cloud.kynerix.crawlix.crawler.CrawlJob;
-import cloud.kynerix.crawlix.crawler.Crawler;
-import cloud.kynerix.crawlix.crawler.VisitedURL;
-import cloud.kynerix.crawlix.crawler.WorkerNode;
+import cloud.kynerix.crawlix.crawler.*;
 import cloud.kynerix.crawlix.workspaces.Workspace;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -44,6 +41,7 @@ public class InfinispanSchema {
     private static final String COUNTER_ID_CONTENT = "CXA_ID_CONTENT";
 
     private static final String CACHE_CRAWLERS = "CXW_{WORKSPACE}_CRAWLERS";
+    private static final String CACHE_CRAWLER_STATS = "CXW_{WORKSPACE}_STATS";
     private static final String CACHE_JOBS = "CXW_{WORKSPACE}_JOBS";
     private static final String CACHE_CONTENT = "CXW_{WORKSPACE}_CONTENT";
     private static final String CACHE_VISITED = "CXW_{WORKSPACE}_VISITED";
@@ -153,6 +151,10 @@ public class InfinispanSchema {
 
     }
 
+    public RemoteCache<String, CrawlerStats> getCrawlerStatsCache(Workspace workspace) {
+        return (RemoteCache<String, CrawlerStats>) this.getCache(buildCacheName(workspace, InfinispanSchema.CACHE_CRAWLER_STATS));
+
+    }
 
     public RemoteCache<String, VisitedURL> getVisitedURLCache(Workspace workspace) {
         return (RemoteCache<String, VisitedURL>) this.getCache(buildCacheName(workspace, InfinispanSchema.CACHE_VISITED));
@@ -208,6 +210,7 @@ public class InfinispanSchema {
         initCache(buildCacheName(workspace, InfinispanSchema.CACHE_CRAWLERS), null, 1000, -1);
         initCache(buildCacheName(workspace, InfinispanSchema.CACHE_JOBS), "crawlix.CrawlJob", 1000, LIFESPAN_JOBS_DAYS);
         initCache(buildCacheName(workspace, InfinispanSchema.CACHE_VISITED), null, 1000, -1);
+        initCache(buildCacheName(workspace, InfinispanSchema.CACHE_CRAWLER_STATS), null, 1000, -1);
         initCache(getContentCacheName(workspace), "crawlix.Content", 10, LIFESPAN_CONTENT_DAYS);
     }
 }

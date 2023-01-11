@@ -3,10 +3,11 @@ package cloud.kynerix.crawlix.crawler.selenium;
 import cloud.kynerix.crawlix.content.Content;
 import cloud.kynerix.crawlix.content.ContentManager;
 import cloud.kynerix.crawlix.crawler.CrawlJob;
-import cloud.kynerix.crawlix.crawler.Crawler;
 import cloud.kynerix.crawlix.crawler.CrawlJobsManager;
 import cloud.kynerix.crawlix.crawler.CrawlResults;
+import cloud.kynerix.crawlix.crawler.Crawler;
 import cloud.kynerix.crawlix.workspaces.Workspace;
+import cloud.kynerix.crawlix.workspaces.WorkspaceManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.openqa.selenium.Dimension;
@@ -20,7 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -56,6 +56,9 @@ public class SeleniumCrawlerExecutor {
 
     @Inject
     CrawlJobsManager crawlJobsManager;
+
+    @Inject
+    WorkspaceManager workspaceManager;
 
     @Inject
     ContentManager contentManager;
@@ -215,7 +218,7 @@ public class SeleniumCrawlerExecutor {
     }
 
     void parseException(WebDriverException ex, WebDriver driver, CrawlResults results) {
-        results.setSuccess(false);
+        results.setOutcome(CrawlResults.ERROR);
 
         String msg = ex.getMessage();
 
@@ -238,34 +241,38 @@ public class SeleniumCrawlerExecutor {
         }
     }
 
-    void analyzeBrowerResponse(WebDriver driver, CrawlResults results) {
+    // Unfortunately, the WebDriver provides no easy way of retrieving the http code
+    // Some basic heuristics to detect not found are needed instead
+    boolean analyzeBrowserResponse(WebDriver driver, CrawlResults results) {
         LOGGER.debug("---- Analysis of initial browser response ----");
         results.setBrowserInfo(collectBrowserInfo(driver));
         results.setBrowserErrorCode(getBrowserReportedErrorCode(driver));
 
-        String reportedLocation = getCurrentLocation(driver);
+        try {
+            String reportedLocation = getCurrentLocation(driver);
 
-        int httpCode = HttpURLConnection.HTTP_OK;
-
-        if (reportedLocation != null && reportedLocation.startsWith("chrome-error:") && results.getBrowserErrorCode() == null) {
-            httpCode = HttpURLConnection.HTTP_INTERNAL_ERROR;
-            results.setError("Unknown browser error: " + reportedLocation);
-            results.setErrorDetails(getCurrentBodyText(driver));
-            results.setBrowserErrorCode("UNKNOWN");
-            results.setSuccess(false);
-        } else if (results.getBrowserErrorCode() != null) {
-            // Full list at chrome://network-errors/
-            if (results.getBrowserErrorCode().startsWith("ERR_NAME")) {
-                httpCode = HttpURLConnection.HTTP_NOT_FOUND;
+            if (reportedLocation != null && reportedLocation.startsWith("chrome-error:") && results.getBrowserErrorCode() == null) {
+                results.setError("Unknown browser error: " + reportedLocation);
+                results.setErrorDetails(getCurrentBodyText(driver));
+                results.setBrowserErrorCode("UNKNOWN");
+                results.setOutcome(CrawlResults.ERROR);
+                return false;
+            } else if (results.getBrowserErrorCode() != null) {
+                // Full list at chrome://network-errors/
+                if (results.getBrowserErrorCode().startsWith("ERR_NAME")) {
+                    results.setOutcome(CrawlResults.NOT_FOUND);
+                } else {
+                    results.setOutcome(CrawlResults.ERROR);
+                    results.setError("Error: " + results.getBrowserErrorCode());
+                    results.setErrorDetails(getCurrentBodyText(driver));
+                }
+                return false;
+            } else {
+                return true;
             }
-            results.setError("Browser error: " + results.getBrowserErrorCode());
-            results.setErrorDetails(getCurrentBodyText(driver));
-            results.setSuccess(false);
-        } else {
-            results.setHttpCode(HttpURLConnection.HTTP_OK);
+        } finally {
+            LOGGER.debug("----------------------------------------------");
         }
-
-        LOGGER.debug("----------------------------------------------");
     }
 
     String normalizeURL(String url) {
@@ -349,88 +356,8 @@ public class SeleniumCrawlerExecutor {
         return savedContent;
     }
 
-    public CrawlResults runCrawler(Workspace workspace, Crawler crawler, CrawlJob crawlJob, boolean persistData) {
 
-        String url = crawlJob == null ? crawler.getDefaultURL() : crawlJob.getURL();
-
-        WebDriver driver = null;
-
-        CrawlResults results = new CrawlResults();
-        results.setSuccess(false);
-        if (url == null) {
-            results.setError("URL is null");
-            return results;
-        }
-
-        try {
-
-            if (crawler == null) {
-                throw new Exception("Crawler " + crawler + " not found");
-            }
-
-            results.setUrl(url);
-            results.setCrawlerKey(crawler.getKey());
-            if (crawlJob != null) {
-                results.setJobId(crawlJob.getId());
-            }
-
-            // Start crawling
-            driver = beginCrawling(crawler);
-
-            if (driver == null) {
-                results.setError("Failed to create browser driver.");
-                results.setSuccess(false);
-                return results;
-            }
-
-            driver.navigate().to(url);
-
-            waitForLoad();
-
-            // Unfortunately, the WebDriver provides no easy way of retrieving the http code
-            // Some basic heuristics to detect not found are needed instead
-
-            analyzeBrowerResponse(driver, results);
-
-            if (results.getHttpCode() != HttpURLConnection.HTTP_OK) {
-                return results;
-            }
-
-            if (crawlJob != null && CrawlJob.ACTION_CHECK.equals(crawlJob.getAction())) {
-                // If the job is just about checking the existence of the page but no parsing, stop here
-                results.setSuccess(true);
-                return results;
-            }
-
-            // Inject context JS (optional), library and crawler JS
-            String pluginJS = crawler.getScript() == null ? null : crawler.getScript();
-            String libraryURL = JAVASCRIPT_URL + JAVASCRIPT_LIBRARY;
-            if (crawler.getContextScript() != null) {
-                injectJS(driver, crawler.getContextScript());
-            }
-            injectJSLibrary(driver, libraryURL, pluginJS);
-            waitForProcessing();
-
-            // Save results
-            LOGGER.debug("Retrieving results");
-
-            parseBrowserResults(driver, workspace, crawler, persistData, results);
-
-        } catch (WebDriverException e) {
-            // CATCH DNS errors and others
-            parseException(e, driver, results);
-            LOGGER.error("Error loading " + driver.getCurrentUrl(), e);
-        } catch (Exception e) {
-            results.setError("Unknown error " + url + " : " + e.getClass().getName() + " : " + e.getMessage());
-            LOGGER.error("Unknown error " + url, e);
-        } finally {
-            releaseDriver(driver);
-        }
-
-        return results;
-    }
-
-    private void parseBrowserResults(WebDriver driver, Workspace workspace, Crawler crawler, boolean persistData, CrawlResults results) {
+    void parsePluginResults(WebDriver driver, Workspace workspace, Crawler crawler, boolean persistData, CrawlResults results) {
         String jsonResults = (String) executeJS(driver, "return crawlix._getResults();");
 
         if (jsonResults != null && jsonResults.trim().length() > 0) {
@@ -447,8 +374,8 @@ public class SeleniumCrawlerExecutor {
 
                     // Process parsed results
                     List<CrawlJob> savedJobs = createURLFoundJobs(workspace, parsedResults, crawler, persistData);
-                    results.setCrawlingJobs(savedJobs);
-                    results.setSuccess(true);
+                    results.setCrawlJobs(savedJobs);
+                    results.setOutcome(CrawlResults.SUCCESS);
                 }
             } catch (Exception e) {
                 LOGGER.error("Error parsing results", e);
@@ -456,6 +383,84 @@ public class SeleniumCrawlerExecutor {
         } else {
             results.setError("Error injecting Javascript. Please, check the syntax for crawler " + crawler.getKey());
         }
+    }
+
+    public CrawlResults executeBrowser(
+            String url,
+            Crawler crawler,
+            boolean runParser,
+            boolean persistData) {
+
+        assert url != null;
+        assert crawler != null;
+
+        Workspace workspace = workspaceManager.getWorkspaceByKey(crawler.getWorkspaceKey());
+
+        assert workspace != null;
+
+        WebDriver driver = null;
+
+        CrawlResults results = new CrawlResults();
+        results.setDate(new Date());
+        results.setOutcome(CrawlResults.ERROR);
+        results.setUrl(url);
+        results.setCrawlerKey(crawler.getKey());
+
+        if (persistData && crawlJobsManager.isURLVisited(workspace, url, crawler.getKey())) {
+            results.setOutcome(CrawlResults.ALREADY_VISITED);
+        } else {
+            try {
+
+                // Start crawling
+                driver = beginCrawling(crawler);
+
+                if (driver == null) {
+                    results.setError("Failed to create browser driver.");
+                    return results;
+                }
+
+                driver.navigate().to(url);
+
+                waitForLoad();
+
+                if (!analyzeBrowserResponse(driver, results)) {
+                    // Fail now
+                    return results;
+                }
+
+                if (!runParser) {
+                    // If the job is just about checking the existence of the page but no parsing, stop here
+                    results.setOutcome(CrawlResults.SUCCESS);
+                    return results;
+                }
+
+                // Inject context JS (optional), library and crawler JS
+                String pluginJS = crawler.getScript() == null ? null : crawler.getScript();
+                String libraryURL = JAVASCRIPT_URL + JAVASCRIPT_LIBRARY;
+                if (crawler.getContextScript() != null) {
+                    injectJS(driver, crawler.getContextScript());
+                }
+                injectJSLibrary(driver, libraryURL, pluginJS);
+                waitForProcessing();
+
+                // Save results
+                LOGGER.debug("Retrieving results");
+
+                parsePluginResults(driver, workspace, crawler, persistData, results);
+
+            } catch (WebDriverException e) {
+                // CATCH DNS errors and others
+                parseException(e, driver, results);
+                LOGGER.error("Error loading " + driver.getCurrentUrl(), e);
+            } catch (Exception e) {
+                results.setError("Unknown error " + url + " : " + e.getClass().getName() + " : " + e.getMessage());
+                LOGGER.error("Unknown error " + url, e);
+            } finally {
+                releaseDriver(driver);
+            }
+        }
+
+        return results;
     }
 
     public String getJavascriptLibraryContent() {

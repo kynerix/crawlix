@@ -21,6 +21,9 @@ public class CrawlJobsManager {
     @Inject
     InfinispanSchema infinispanSchema;
 
+    @Inject
+    CrawlersManager crawlersManager;
+
     public CrawlJob getJob(Workspace workspace, long id) {
         return infinispanSchema.getJobsCache(workspace).get(id);
     }
@@ -147,10 +150,43 @@ public class CrawlJobsManager {
         return infinispanSchema.getVisitedURLCache(workspace).containsKey(crawlerKey + "|" + url);
     }
 
-    public void cleanVisitedURLS(Workspace workspace, String crawlerKey) {
+    void cleanVisitedURLS(Workspace workspace, String crawlerKey) {
         infinispanSchema.getQueryFactory(infinispanSchema.getVisitedURLCache(workspace)).create(
                         "DELETE from crawlix.VisitedURL v where v.crawlerKey = :crawlerKey")
                 .setParameter("crawlerKey", crawlerKey)
                 .executeStatement();
+    }
+
+    public CrawlJob createSeedJobIfNeeded(Crawler crawler) {
+
+        if (crawler == null) return null;
+
+        try {
+            Workspace workspace = crawlersManager.getWorkspace(crawler);
+
+            if (!crawler.isActive()) return null;
+            if (crawler.getLastStart() == null) return null;
+
+            if ((crawler.getLastStart().getTime() > (System.currentTimeMillis() - crawler.getWatchFrequencySeconds() * 1000L)
+                    || !findJobs(workspace, crawler.getKey()).isEmpty())) {
+                return null;
+            }
+
+            // Create new seed CrawlJob
+            cleanVisitedURLS(workspace, crawler.getKey());
+
+            // Re-update script from source, in case is needed
+            crawlersManager.updateScriptFromSource(crawler);
+            crawler.setLastStart(new Date());
+
+            crawlersManager.save(workspace, crawler);
+
+            CrawlJob newCrawlJob = newJob(workspace, crawler.getKey(), crawler.getDefaultURL(), null);
+            save(workspace, newCrawlJob);
+            return newCrawlJob;
+        } catch (Exception e) {
+            LOGGER.error("Error in controller: crawler " + crawler.getKey(), e);
+            return null;
+        }
     }
 }

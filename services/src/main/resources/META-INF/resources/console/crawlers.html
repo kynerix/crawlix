@@ -87,13 +87,10 @@
                                 aria-current="page">Crawlers</a>
                         </li>
                         <li class="pf-c-nav__item">
-                            <a href="/console/nodes.html" class="pf-c-nav__link">Nodes</a>
-                        </li>
-                        <li class="pf-c-nav__item">
-                            <a href="/console/workspaces.html" class="pf-c-nav__link">Workspaces</a>
-                        </li>
-                        <li class="pf-c-nav__item">
                             <a href="/console/jobs.html" class="pf-c-nav__link">Jobs</a>
+                        </li>
+                        <li class="pf-c-nav__item">
+                            <a href="/console/nodes.html" class="pf-c-nav__link">Nodes</a>
                         </li>
                         <li class="pf-c-nav__item">
                             <a href="/console/resources.html" class="pf-c-nav__link">Resources</a>
@@ -119,7 +116,7 @@
                     <!-- END of SPINNER -->
 
                     <div class="pf-c-content">
-                        <h1>Crawlers</h1>
+                        <h1>Crawlers dashboard</h1>
                         <p>List of available crawler descriptors.</p>
                     </div>
                 </div>
@@ -158,9 +155,14 @@
                         <thead>
                             <tr>
                                 <th>Key</th>
-                                <th>Workspace</th>
                                 <th>Status</th>
                                 <th>Last update</th>
+                                <th>Content</th>
+                                <th>Jobs</th>
+                                <th>Pages</th>
+                                <th>Success</th>
+                                <th>Error</th>
+                                <th>Not found</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -320,7 +322,6 @@
             $("#data-table").DataTable({
                 columns: [
                     { data: "key" },
-                    { data: "workspace" },
                     {
                         render: function (data, type, rowData, meta) {
                             return renderIcon(rowData.status, ["ENABLED"], ["DISABLED"]) + rowData.status;
@@ -332,21 +333,25 @@
                                 return renderDate(rowData.lastUpdate);
                             }
                     },
+                    { data: "stats.contentCount" },
+                    { data: "stats.jobsCount" },
+                    { data: "stats.pagesCount" },
+                    { data: "stats.successCount" },
+                    { data: "stats.errorCount" },
+                    { data: "stats.notFoundCount" },
                     {
                         data: null,
                         render: function (data, type, full, meta) {
                             // Inline action kebab renderer
                             return renderMenu(
                                 [
-                                    { title: "View", action: "loadCrawler('" + data.workspace + "', '" + data.key + "', showCrawlerDetails)" },
+                                    { title: "View", action: "loadCrawler('" + data.workspaceKey + "', '" + data.key + "', showCrawlerDetails)" },
                                     { separator: true },
-                                    { title: "Enable", action: "enableCrawler('" + data.workspace + "', '" + data.key + "', refreshTable)" },
-                                    { title: "Disable", action: "disableCrawler('" + data.workspace + "', '" + data.key + "', refreshTable)" },
+                                    { title: "Enable", action: "enableCrawler('" + data.workspaceKey + "', '" + data.key + "', refreshTable)" },
+                                    { title: "Disable", action: "disableCrawler('" + data.workspaceKey + "', '" + data.key + "', refreshTable)" },
                                     { separator: true },
-                                    { title: "Run Test", action: "testCrawler('" + data.workspace + "', '" + data.key + "', showCrawlerResults)" },
-                                    { title: "Execute", action: "executeCrawler('" + data.workspace + "', '" + data.key + "', showCrawlerResults)" },
-                                    //{ separator: true },
-                                    //{ title: "Delete", action: "deleteCrawler('" + data.key + "', refreshTable)" },
+                                    { title: "Run Test", action: "testCrawler('" + data.workspaceKey + "', '" + data.key + "', showCrawlerResults)" },
+                                    { title: "Execute", action: "executeCrawler('" + data.workspaceKey + "', '" + data.key + "', showCrawlerResults)" },
                                 ]);
                         }
                     }

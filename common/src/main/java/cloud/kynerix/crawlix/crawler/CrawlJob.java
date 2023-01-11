@@ -10,17 +10,17 @@ public class CrawlJob {
 
     public static final String STATUS_WAITING = "WAITING";
     public static final String STATUS_RUNNING = "RUNNING";
-    public static final String STATUS_FINISHED_OK = "OK";
-    public static final String STATUS_FINISHED_ERR = "ERROR";
+    public static final String STATUS_FINISHED = "FINISHED";
 
     public static final String ACTION_PARSE = "PARSE";
     public static final String ACTION_CHECK = "CHECK";
 
     private Long id;
     private String action;
+    private String status;
+    private String outcome;
     private String crawlerKey;
     private String workspace;
-    private String status;
     private String URL;
     private String context;
     private String parentURL;
@@ -44,7 +44,7 @@ public class CrawlJob {
         return status;
     }
 
-    @ProtoField(number = 3, required = true,name = "URL")
+    @ProtoField(number = 3, required = true, name = "URL")
     @ProtoDoc("@Field(index = Index.YES, store = Store.NO)")
     public String getURL() {
         return URL;
@@ -100,6 +100,11 @@ public class CrawlJob {
     }
 
     @ProtoField(number = 13)
+    public String getOutcome() {
+        return outcome;
+    }
+
+    @ProtoField(number = 14)
     public String getContext() {
         return context;
     }
@@ -156,6 +161,10 @@ public class CrawlJob {
         this.context = context;
     }
 
+    public void setOutcome(String outcome) {
+        this.outcome = outcome;
+    }
+
     public void incFailures() {
         this.consecutiveFailures++;
     }
@@ -165,9 +174,10 @@ public class CrawlJob {
         return "CrawlJob{" +
                 "id=" + id +
                 ", action='" + action + '\'' +
-                ", crawlerId='" + crawlerKey + '\'' +
-                ", workspace='" + workspace + '\'' +
                 ", status='" + status + '\'' +
+                ", outcome='" + outcome + '\'' +
+                ", crawlerKey='" + crawlerKey + '\'' +
+                ", workspace='" + workspace + '\'' +
                 ", URL='" + URL + '\'' +
                 ", context='" + context + '\'' +
                 ", parentURL='" + parentURL + '\'' +
